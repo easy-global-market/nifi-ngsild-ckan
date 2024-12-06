@@ -15,6 +15,9 @@ import java.util.*;
 
 public class NGSIUtils {
 
+    public static List<String> IGNORED_KEYS_ON_ATTRIBUTES =
+            List.of("type", "value", "object", "datasetId", "createdAt", "modifiedAt", "instanceId", "observedAt");
+
     public NGSIEvent getEventFromFlowFile(FlowFile flowFile, final ProcessSession session) {
 
         final byte[] buffer = new byte[(int) flowFile.getSize()];
@@ -70,8 +73,8 @@ public class NGSIUtils {
                         String keyOne = keysOneLevel.next();
                         if ("type".equals(keyOne)){
                             // Do Nothing
-                        } else if ("observedAt".equals(keyOne) || "unitCode".equals(keyOne)){
-                            // TBD Do Something for unitCode and observedAt
+                        } else if (IGNORED_KEYS_ON_ATTRIBUTES.contains(keyOne)){
+                            // Leave the value as it is
                             String value2 = value.getString(keyOne);
                             subAttrName = keyOne;
                             subAttrValue = value2;
