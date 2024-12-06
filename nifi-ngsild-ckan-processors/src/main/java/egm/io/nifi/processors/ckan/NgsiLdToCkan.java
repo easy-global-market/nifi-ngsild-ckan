@@ -217,7 +217,7 @@ public class NgsiLdToCkan extends AbstractProcessor {
             getLogger().debug("DCAT metadata: {}" , dcatMetadata);
 
             for (Entity entity : entities) {
-                final String pkgTitle = n.getDataFromRelationshipDetails(entity, "title");
+                final String pkgTitle = flowFile.getAttribute("title");
                 final String pkgName = ckanBackend.buildPkgName(entity,pkgTitle,dataModel,enableEncoding,enableLowercase,dcatMetadata);
                 final String resName = ckanBackend.buildResName(entity,dataModel,enableEncoding,enableLowercase,dcatMetadata);
                 aggregator.initialize(entity);

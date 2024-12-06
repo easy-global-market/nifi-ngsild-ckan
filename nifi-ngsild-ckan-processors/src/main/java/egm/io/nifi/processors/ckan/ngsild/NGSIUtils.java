@@ -151,24 +151,4 @@ public class NGSIUtils {
                 !Objects.equals(attribute.getAttrValue(), "null"))
             attributes.add(attribute);
     }
-
-    public String getDataFromRelationshipDetails(Entity entity, String data) {
-        ArrayList<AttributesLD> entityAttributes = entity.getEntityAttrsLD();
-        for(AttributesLD attr : entityAttributes) {
-            if("servesDataset".contentEquals(attr.getAttrName())) {
-                for(AttributesLD subAttr : attr.getSubAttrs()) {
-                    if ("RelationshipDetails".equals(subAttr.getAttrName())) {
-                        for (AttributesLD nestedSubAttr : subAttr.getSubAttrs()) {
-                            if (data.equals(nestedSubAttr.getAttrName())) {
-                                return nestedSubAttr.getAttrValue();
-                            }
-                        }
-                    }
-
-                }
-            }
-        }
-
-        return null;
-    }
 }
