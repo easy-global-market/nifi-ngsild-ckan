@@ -83,10 +83,10 @@ public class NgsiLdToCkan extends AbstractProcessor {
             .name("data-model")
             .displayName("Data Model")
             .description("The Data model for creating the tables when an event have been received you can choose between" +
-                    ":db-by-entity or db-by-entity-type, default value is db-by-entity-type")
+                    ":db-by-entity or db-by-entity-id, default value is db-by-entity")
             .required(false)
-            .allowableValues("db-by-entity-type", "db-by-entity")
-            .defaultValue("db-by-entity-type")
+            .allowableValues("db-by-entity", "db-by-entity-id")
+            .defaultValue("db-by-entity")
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
 
