@@ -8,6 +8,7 @@ import egm.io.nifi.processors.ckan.http.HttpBackend;
 import egm.io.nifi.processors.ckan.http.JsonResponse;
 import egm.io.nifi.processors.ckan.model.DataStore;
 import egm.io.nifi.processors.ckan.model.DCATMetadata;
+import egm.io.nifi.processors.ckan.ngsild.AttributesLD;
 import egm.io.nifi.processors.ckan.ngsild.Entity;
 import egm.io.nifi.processors.ckan.ngsild.NGSIConstants;
 import egm.io.nifi.processors.ckan.ngsild.NGSICharsets;
@@ -666,28 +667,32 @@ public class CKANBackend extends HttpBackend {
     } // buildPkgName
 
     /**
-     * Builds a resource name given a entity. It throws an exception if the naming conventions are violated.
+     * Builds a resource name given an entity. It throws an exception if the naming conventions are violated.
      * @return Resource name
      */
     public String buildResName(Entity entity, String dataModel, boolean enableEncoding, boolean enableLowercase, DCATMetadata dcatMetadata) throws Exception {
         String resName;
-        String entityId;
-        String entityType = (enableLowercase) ? entity.getEntityType().toLowerCase() : entity.getEntityType();
+        String entityTitle = "";
+        ArrayList<AttributesLD> entityAttributes = entity.getEntityAttrsLD();
+        for(AttributesLD attr : entityAttributes) {
+            if(attr.getAttrName().toLowerCase().equals("title")) {
+                entityTitle = (enableLowercase) ? attr.getAttrValue().toLowerCase() : attr.getAttrValue();
+            }
+        }
         if (dcatMetadata != null && dcatMetadata.getResourceName() != null) {
-            resName = (enableLowercase) ? entity.getEntityId().toLowerCase() : dcatMetadata.getResourceName();
+            resName = (enableLowercase) ? entityTitle : dcatMetadata.getResourceName();
         } else {
-            entityId = (enableLowercase) ? entity.getEntityId().toLowerCase() : entity.getEntityId();
             switch (dataModel) {
                 case "db-by-entity-id":
                     //FIXME
                     //note that if we enable encode() and/or encodeCKAN() in this datamodel we could have problems, although it need to be analyzed in deep
-                    resName = entityId;
+                    resName = entityTitle;
                     break;
                 case "db-by-entity":
                     if (enableEncoding) {
-                        resName = NGSICharsets.encodeCKAN(entityId) + "_" + NGSICharsets.encodeCKAN(entityType);
+                        resName = NGSICharsets.encodeCKAN(entityTitle);
                     } else {
-                        resName = NGSICharsets.encode(entityId, false, true).toLowerCase(Locale.ENGLISH) + "_" + NGSICharsets.encode(entityType, false, true);
+                        resName = NGSICharsets.encode(entityTitle, false, true).toLowerCase(Locale.ENGLISH);
                     } // if else
 
                     if (resName.length() > NGSIConstants.CKAN_MAX_NAME_LEN) {
