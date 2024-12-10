@@ -8,10 +8,7 @@ import egm.io.nifi.processors.ckan.http.HttpBackend;
 import egm.io.nifi.processors.ckan.http.JsonResponse;
 import egm.io.nifi.processors.ckan.model.DataStore;
 import egm.io.nifi.processors.ckan.model.DCATMetadata;
-import egm.io.nifi.processors.ckan.ngsild.AttributesLD;
-import egm.io.nifi.processors.ckan.ngsild.Entity;
-import egm.io.nifi.processors.ckan.ngsild.NGSIConstants;
-import egm.io.nifi.processors.ckan.ngsild.NGSICharsets;
+import egm.io.nifi.processors.ckan.ngsild.*;
 import egm.io.nifi.processors.ckan.utils.CKANCache;
 import org.apache.http.Header;
 import org.apache.http.entity.StringEntity;
@@ -29,6 +26,7 @@ public class CKANBackend extends HttpBackend {
     private final String viewer;
     private final CKANCache cache;
     private static final Logger logger = LoggerFactory.getLogger(CKANBackend.class);
+    final NGSIUtils ngsiUtils = new NGSIUtils();
 
     public CKANBackend(String apiKey, String[] ckanHost, String ckanPort,
             boolean ssl, String ckanViewer) {
@@ -581,43 +579,27 @@ public class CKANBackend extends HttpBackend {
      * Builds an organization name given an organizationName. It throws an exception if the naming conventions are violated.
      * @return Organization name
      */
-    public String buildOrgName(String organizationName, String dataModel, boolean enableEncoding, boolean enableLowercase,
-            DCATMetadata dcatMetadata) throws Exception {
+    public String buildOrgName(String organizationName, DCATMetadata dcatMetadata) throws Exception {
         String orgName;
         String finalOrganizationName;
 
-        if (enableLowercase) {
-            finalOrganizationName = organizationName.toLowerCase();
-        } else if (dcatMetadata != null && dcatMetadata.getOrganizationName() != null) {
-            finalOrganizationName = dcatMetadata.getOrganizationName();
+        if (dcatMetadata != null && dcatMetadata.getOrganizationName() != null) {
+            finalOrganizationName = dcatMetadata.getOrganizationName().toLowerCase(Locale.ENGLISH);
         } else {
-            finalOrganizationName = organizationName;
+            finalOrganizationName = organizationName.toLowerCase(Locale.ENGLISH);
         }
 
-        switch (dataModel) {
-            case "db-by-entity-id":
-                // FIXME
-                // note that if we enable encode() and/or encodeCKAN() in this datamodel we
-                // could have problems, although it need to be analyzed in deep
-                orgName = NGSICharsets.encodeCKAN(finalOrganizationName);
-                break;
-            case "db-by-entity":
-                orgName = enableEncoding
-                        ? NGSICharsets.encodeCKAN(finalOrganizationName)
-                        : NGSICharsets.encode(finalOrganizationName, false, true).toLowerCase(Locale.ENGLISH);
-                int orgNameLength = orgName.length();
+        orgName = NGSICharsets.encodeCKAN(finalOrganizationName);
+        int orgNameLength = orgName.length();
 
-                if (orgNameLength > NGSIConstants.CKAN_MAX_NAME_LEN) {
-                    throw new Exception("Building organization name '" + orgName + "' and its length is "
-                            + "greater than " + NGSIConstants.CKAN_MAX_NAME_LEN);
-                } else if (orgNameLength < NGSIConstants.CKAN_MIN_NAME_LEN) {
-                    throw new Exception("Building organization name '" + orgName + "' and its length is "
-                            + "lower than " + NGSIConstants.CKAN_MIN_NAME_LEN);
-                } // if else if
-                break;
-            default:
-                throw new Exception("Not supported Data Model for CKAN Sink: " + dataModel);
-        }
+        if (orgNameLength > NGSIConstants.CKAN_MAX_NAME_LEN) {
+            throw new Exception("Building organization name '" + orgName + "' and its length is "
+                    + "greater than " + NGSIConstants.CKAN_MAX_NAME_LEN);
+        } else if (orgNameLength < NGSIConstants.CKAN_MIN_NAME_LEN) {
+            throw new Exception("Building organization name '" + orgName + "' and its length is "
+                    + "lower than " + NGSIConstants.CKAN_MIN_NAME_LEN);
+        } // if else if
+
         return orgName;
     } // buildOrgName
 
@@ -626,43 +608,26 @@ public class CKANBackend extends HttpBackend {
      * conventions are violated.
      * @return Package name
      */
-    public String buildPkgName(Entity entity, String pkgTitle, String dataModel, boolean enableEncoding, boolean enableLowercase,
-            DCATMetadata dcatMetadata) throws Exception {
+    public String buildPkgName(String pkgTitle, DCATMetadata dcatMetadata) throws Exception {
         String pkgName;
         String finalPackageName;
-        if (enableLowercase && pkgTitle != null) {
-            finalPackageName = pkgTitle;
-        } else if (dcatMetadata != null && dcatMetadata.getPackageName() != null) {
-            finalPackageName = dcatMetadata.getPackageName();
+
+        if (dcatMetadata != null && dcatMetadata.getPackageName() != null) {
+            finalPackageName = dcatMetadata.getPackageName().toLowerCase(Locale.ENGLISH);
         } else {
-            finalPackageName = entity.getEntityId();
+            finalPackageName = pkgTitle.toLowerCase(Locale.ENGLISH);
         }
 
-        switch (dataModel) {
-            case "db-by-entity-id":
-                // FIXME
-                // note that if we enable encode() and/or encodeCKAN() in this datamodel we
-                // could have problems, although it need to be analyzed in deep
-                pkgName = NGSICharsets.encodeCKAN(finalPackageName);
-                break;
-            case "db-by-entity":
-                if (enableEncoding) {
-                    pkgName = NGSICharsets.encodeCKAN(finalPackageName);
+        pkgName = NGSICharsets.encodeCKAN(finalPackageName);
 
-                } else {
-                    pkgName = NGSICharsets.encode(finalPackageName, false, true).toLowerCase(Locale.ENGLISH);
-                } // if else
-                if (pkgName.length() > NGSIConstants.CKAN_MAX_NAME_LEN) {
-                    throw new Exception("Building package name '" + pkgName + "' and its length is "
-                            + "greater than " + NGSIConstants.CKAN_MAX_NAME_LEN);
-                } else if (pkgName.length() < NGSIConstants.CKAN_MIN_NAME_LEN) {
-                    throw new Exception("Building package name '" + pkgName + "' and its length is "
-                            + "lower than " + NGSIConstants.CKAN_MIN_NAME_LEN);
-                } // if else if
-                break;
-            default:
-                throw new Exception("Not supported Data Model for CKAN Sink: " + dataModel);
-        }
+        if (pkgName.length() > NGSIConstants.CKAN_MAX_NAME_LEN) {
+            throw new Exception("Building package name '" + pkgName + "' and its length is "
+                    + "greater than " + NGSIConstants.CKAN_MAX_NAME_LEN);
+        } else if (pkgName.length() < NGSIConstants.CKAN_MIN_NAME_LEN) {
+            throw new Exception("Building package name '" + pkgName + "' and its length is "
+                    + "lower than " + NGSIConstants.CKAN_MIN_NAME_LEN);
+        } // if else if
+
         return pkgName;
     } // buildPkgName
 
@@ -670,42 +635,24 @@ public class CKANBackend extends HttpBackend {
      * Builds a resource name given an entity. It throws an exception if the naming conventions are violated.
      * @return Resource name
      */
-    public String buildResName(Entity entity, String dataModel, boolean enableEncoding, boolean enableLowercase, DCATMetadata dcatMetadata) throws Exception {
+    public String buildResName(Entity entity, DCATMetadata dcatMetadata) throws Exception {
         String resName;
-        String entityTitle = "";
-        ArrayList<AttributesLD> entityAttributes = entity.getEntityAttrsLD();
-        for(AttributesLD attr : entityAttributes) {
-            if(attr.getAttrName().toLowerCase().equals("title")) {
-                entityTitle = (enableLowercase) ? attr.getAttrValue().toLowerCase() : attr.getAttrValue();
-            }
-        }
-        if (dcatMetadata != null && dcatMetadata.getResourceName() != null) {
-            resName = (enableLowercase) ? entityTitle : dcatMetadata.getResourceName();
-        } else {
-            switch (dataModel) {
-                case "db-by-entity-id":
-                    //FIXME
-                    //note that if we enable encode() and/or encodeCKAN() in this datamodel we could have problems, although it need to be analyzed in deep
-                    resName = entityTitle;
-                    break;
-                case "db-by-entity":
-                    if (enableEncoding) {
-                        resName = NGSICharsets.encodeCKAN(entityTitle);
-                    } else {
-                        resName = NGSICharsets.encode(entityTitle, false, true).toLowerCase(Locale.ENGLISH);
-                    } // if else
+        String entityTitle = ngsiUtils.getSpecificAttributeValue(entity, "title");
 
-                    if (resName.length() > NGSIConstants.CKAN_MAX_NAME_LEN) {
-                        throw new Exception("Building resource name '" + resName + "' and its length is "
-                                + "greater than " + NGSIConstants.CKAN_MAX_NAME_LEN);
-                    } else if (resName.length() < NGSIConstants.CKAN_MIN_NAME_LEN) {
-                        throw new Exception("Building resource name '" + resName + "' and its length is "
-                                + "lower than " + NGSIConstants.CKAN_MIN_NAME_LEN);
-                    } // if else if
-                    break;
-                default:
-                    throw new Exception("Not supported Data Model for CKAN Sink: " + dataModel);
-            }
+        if (dcatMetadata != null && dcatMetadata.getResourceName() != null) {
+            resName = dcatMetadata.getResourceName();
+        } else {
+
+            resName = entityTitle;
+
+            if (resName.length() > NGSIConstants.CKAN_MAX_NAME_LEN) {
+                throw new Exception("Building resource name '" + resName + "' and its length is "
+                        + "greater than " + NGSIConstants.CKAN_MAX_NAME_LEN);
+            } else if (resName.length() < NGSIConstants.CKAN_MIN_NAME_LEN) {
+                throw new Exception("Building resource name '" + resName + "' and its length is "
+                        + "lower than " + NGSIConstants.CKAN_MIN_NAME_LEN);
+            } // if else if
+
         }
         return resName;
     } // buildResName

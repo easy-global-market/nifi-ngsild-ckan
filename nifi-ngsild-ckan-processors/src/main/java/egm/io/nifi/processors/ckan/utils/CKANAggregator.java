@@ -119,36 +119,20 @@ public abstract class CKANAggregator {
     protected String fieldNames;
 
 
-    public String getOrgName (boolean enableLowercase) {
-        if (enableLowercase) {
-            return orgName.toLowerCase();
-        } else {
-            return orgName;
-        } // if else
-    } //
+    public String getOrgName() {
+        return orgName.toLowerCase();
+    }
 
-    public String getPkgName (boolean enableLowercase) {
-        if (enableLowercase) {
+    public String getPkgName() {
             return pkgName.toLowerCase();
-        } else {
-            return pkgName;
-        } // if else
-    } //
+    }
 
-    public String getResName (boolean enableLowercase) {
-        if (enableLowercase) {
+    public String getResName() {
             return resName.toLowerCase();
-        } else {
-            return resName;
-        } // if else
-    } //
+    }
 
-    public String getTableName(boolean enableLowercase) {
-        if (enableLowercase) {
+    public String getTableName() {
             return tableName.toLowerCase();
-        } else {
-            return tableName;
-        } // if else
     } // getTableName
 
     public String getTypedFieldNames() {
@@ -164,7 +148,7 @@ public abstract class CKANAggregator {
         entityTypeForNaming=entity.getEntityType();
     } // initialize
 
-    public abstract void aggregate(Entity entity, long creationTime, String dataModel);
+    public abstract void aggregate(Entity entity, long creationTime);
 
     /**
      * Class for aggregating batches in row mode.
@@ -198,7 +182,7 @@ public abstract class CKANAggregator {
         }
 
         @Override
-        public void aggregate(Entity entity, long creationTime, String ngsiVersion) {
+        public void aggregate(Entity entity, long creationTime) {
 
         }
 
@@ -242,7 +226,7 @@ public abstract class CKANAggregator {
         } // initialize
 
         @Override
-        public void aggregate(Entity entity,long creationTime, String ngsiVersion) {
+        public void aggregate(Entity entity, long creationTime) {
             LinkedHashMap<String, ArrayList<JsonElement>> aggregation = getAggregation();
 
             // get the getRecvTimeTs headers

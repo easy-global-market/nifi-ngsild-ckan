@@ -17,6 +17,7 @@ public class NGSIUtils {
 
     public static List<String> IGNORED_KEYS_ON_ATTRIBUTES =
             List.of("type", "value", "object", "datasetId", "createdAt", "modifiedAt", "instanceId", "observedAt");
+    private static final Logger logger = LoggerFactory.getLogger(NGSIUtils.class);
 
     public NGSIEvent getEventFromFlowFile(FlowFile flowFile, final ProcessSession session) {
 
@@ -150,5 +151,18 @@ public class NGSIUtils {
                 attribute.getAttrValue() != null &&
                 !Objects.equals(attribute.getAttrValue(), "null"))
             attributes.add(attribute);
+    }
+
+    public String getSpecificAttributeValue(Entity entity, String attributeName) {
+        ArrayList<AttributesLD> entityAttributes = entity.getEntityAttrsLD();
+        for(AttributesLD attr : entityAttributes) {
+            if(attr.getAttrName().toLowerCase().equals(attributeName)) {
+                return  attr.getAttrValue();
+            }
+        }
+        logger.info("Cannot return attribute value (attribute name=" + attributeName + ")");
+
+        return null;
+
     }
 }

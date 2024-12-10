@@ -79,17 +79,6 @@ public class NgsiLdToCkan extends AbstractProcessor {
             .addValidator(StandardValidators.BOOLEAN_VALIDATOR)
             .build();
 
-    protected static final PropertyDescriptor DATA_MODEL = new PropertyDescriptor.Builder()
-            .name("data-model")
-            .displayName("Data Model")
-            .description("The Data model for creating the tables when an event have been received you can choose between" +
-                    ":db-by-entity or db-by-entity-type, default value is db-by-entity-type")
-            .required(false)
-            .allowableValues("db-by-entity-type", "db-by-entity")
-            .defaultValue("db-by-entity-type")
-            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
-            .build();
-
     protected static final PropertyDescriptor ATTR_PERSISTENCE = new PropertyDescriptor.Builder()
             .name("attr-persistence")
             .displayName("Attribute Persistence")
@@ -104,24 +93,6 @@ public class NgsiLdToCkan extends AbstractProcessor {
             .name("create-datastore")
             .displayName("Create DataStore")
             .description("true or false, true applies create the DataStore resource")
-            .required(false)
-            .allowableValues("true", "false")
-            .defaultValue("true")
-            .build();
-
-    protected static final PropertyDescriptor ENABLE_ENCODING= new PropertyDescriptor.Builder()
-            .name("enable-encoding")
-            .displayName("Enable Encoding")
-            .description("true or false, true applies the new encoding, false applies the old encoding.")
-            .required(false)
-            .allowableValues("true", "false")
-            .defaultValue("true")
-            .build();
-
-    protected static final PropertyDescriptor ENABLE_LOWERCASE= new PropertyDescriptor.Builder()
-            .name("enable-lowercase")
-            .displayName("Enable Lowercase")
-            .description("true or false, true for creating the Schema and Tables name with lowercase.")
             .required(false)
             .allowableValues("true", "false")
             .defaultValue("true")
@@ -158,11 +129,8 @@ public class NgsiLdToCkan extends AbstractProcessor {
         properties.add(CKAN_VIEWER);
         properties.add(CKAN_API_KEY);
         properties.add(SSL);
-        properties.add(DATA_MODEL);
         properties.add(ATTR_PERSISTENCE);
         properties.add(CREATE_DATASTORE);
-        properties.add(ENABLE_ENCODING);
-        properties.add(ENABLE_LOWERCASE);
         properties.add(BATCH_SIZE);
         properties.add(RollbackOnFailure.ROLLBACK_ON_FAILURE);
         return properties;
@@ -191,37 +159,34 @@ public class NgsiLdToCkan extends AbstractProcessor {
     }
 
     protected void persistFlowFile(final ProcessContext context, final FlowFile flowFile, ProcessSession session, CKANBackend ckanBackend) throws Exception {
-        final boolean enableEncoding = context.getProperty(ENABLE_ENCODING).asBoolean();
-        final boolean enableLowercase = context.getProperty(ENABLE_LOWERCASE).asBoolean();
         final boolean createDataStore = context.getProperty(CREATE_DATASTORE).asBoolean();
         final String attrPersistence = context.getProperty(ATTR_PERSISTENCE).getValue();
         final NGSIUtils n = new NGSIUtils();
         final BuildDCATMetadata buildDCATMetadata = new BuildDCATMetadata();
         final DCATMetadata dcatMetadata= buildDCATMetadata.getMetadataFromFlowFile(flowFile,session);
-        final String dataModel=context.getProperty(DATA_MODEL).getValue();
         final NGSIEvent event=n.getEventFromFlowFile(flowFile,session);
         final long creationTime = event.getCreationTime();
         final String organizationName = flowFile.getAttribute("X-CKAN-OrganizationName");
         CKANAggregator aggregator = new CKANAggregator() {
             @Override
-            public void aggregate(Entity entity, long creationTime, String dataModel) {
+            public void aggregate(Entity entity, long creationTime) {
 
             }
         };
         aggregator = aggregator.getAggregator("row".equals(attrPersistence));
         try {
 
-            final String orgName = ckanBackend.buildOrgName(organizationName,dataModel,enableEncoding,enableLowercase,dcatMetadata);
+            final String orgName = ckanBackend.buildOrgName(organizationName, dcatMetadata);
             ArrayList<Entity> entities = event.getEntitiesLD();
             getLogger().info("[] Persisting data at NGSICKANSink (orgName=" + orgName+ ", ");
             getLogger().debug("DCAT metadata: {}" , dcatMetadata);
 
             for (Entity entity : entities) {
                 final String pkgTitle = flowFile.getAttribute("datasetTitle");
-                final String pkgName = ckanBackend.buildPkgName(entity,pkgTitle,dataModel,enableEncoding,enableLowercase,dcatMetadata);
-                final String resName = ckanBackend.buildResName(entity,dataModel,enableEncoding,enableLowercase,dcatMetadata);
+                final String pkgName = ckanBackend.buildPkgName(pkgTitle, dcatMetadata);
+                final String resName = ckanBackend.buildResName(entity, dcatMetadata);
                 aggregator.initialize(entity);
-                aggregator.aggregate(entity, creationTime, context.getProperty(DATA_MODEL).getValue());
+                aggregator.aggregate(entity, creationTime);
                 ArrayList<JsonObject> jsonObjects = CKANAggregator.linkedHashMapToJson(aggregator.getAggregationToPersist());
                 String  aggregation= "";
 
