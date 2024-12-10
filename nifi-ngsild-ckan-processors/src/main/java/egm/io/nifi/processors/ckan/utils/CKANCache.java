@@ -180,7 +180,7 @@ public class CKANCache extends HttpBackend {
                 // put the package in the tree and in the package map
                 String pkgId = result.get("id").toString();
                 tree.get(orgName).put(pkgName, new ArrayList<>());
-                orgMap.put(pkgName, pkgId);
+                setPkgId(orgName, pkgName, pkgId);
                 logger.info("Package found in CKAN, now cached (orgName=\"{}\", pkgName/pkgId=\"{}/{}\")", orgName, pkgName, pkgId);
                 
                 // get the resource and populate the resource map
