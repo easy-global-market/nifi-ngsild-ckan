@@ -160,7 +160,7 @@ public class NGSIUtils {
                 return  attr.getAttrValue();
             }
         }
-        logger.info("Cannot return attribute value (attribute name=" + attributeName + ")");
+        logger.info("Did not find attribute " + attributeName + " in entity " + entity.getEntityId());
 
         return null;
 
