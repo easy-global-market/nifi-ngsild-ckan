@@ -637,11 +637,11 @@ public class CKANBackend extends HttpBackend {
      */
     public String buildResName(Entity entity, DCATMetadata dcatMetadata) throws Exception {
         String resName;
-        String entityTitle = ngsiUtils.getSpecificAttributeValue(entity, "title");
 
         if (dcatMetadata != null && dcatMetadata.getResourceName() != null) {
             resName = dcatMetadata.getResourceName();
         } else {
+            String entityTitle = ngsiUtils.getSpecificAttributeValue(entity, "title");
             resName = entityTitle != null ? entityTitle : entity.getEntityId();
         }
 

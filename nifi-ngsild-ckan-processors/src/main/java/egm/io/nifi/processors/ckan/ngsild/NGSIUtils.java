@@ -156,7 +156,7 @@ public class NGSIUtils {
     public String getSpecificAttributeValue(Entity entity, String attributeName) {
         ArrayList<AttributesLD> entityAttributes = entity.getEntityAttrsLD();
         for(AttributesLD attr : entityAttributes) {
-            if(attr.getAttrName().toLowerCase().equals(attributeName)) {
+            if(attr.getAttrName().toLowerCase().equals(attributeName.toLowerCase())) {
                 return  attr.getAttrValue();
             }
         }

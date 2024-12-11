@@ -29,7 +29,7 @@ public final class NGSICharsets {
                 out += c;
             }  else if (code >= 48 && code <= 57) { // 0-9 --> 0-9
                 out += c;
-            } else if (c == '_' || c == '-' ) { // _ --> _
+            } else if (c == '_' || c == '-' ) {
                 out += c;
             } else { // --> any other special character
                 out += '-';
