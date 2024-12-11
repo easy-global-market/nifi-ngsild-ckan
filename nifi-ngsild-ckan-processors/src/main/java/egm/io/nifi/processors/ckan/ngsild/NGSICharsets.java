@@ -25,35 +25,14 @@ public final class NGSICharsets {
             char c = in.charAt(i);
             int code = c;
 
-            if (code >= 97 && code <= 119) { // a-w --> a-w
+            if (code >= 97 && code <= 122) { // a-z --> a-z
                 out += c;
-            } else if (c == 'x') {
-                String next4;
-
-                if (i + 4 < in.length()) {
-                    next4 = in.substring(i + 1, i + 5);
-                } else {
-                    next4 = "WXYZ"; // whatever except a unicode
-                } // if else
-
-                if (next4.matches("^[0-9a-fA-F]{4}$")) { // x --> xx
-                    out += "xx";
-                } else { // x --> x
-                    out += c;
-                } // if else
-            } else if (code == 121 || code == 122) { // yz --> yz
+            }  else if (code >= 48 && code <= 57) { // 0-9 --> 0-9
                 out += c;
-            } else if (code >= 48 && code <= 57) { // 0-9 --> 0-9
+            } else if (c == '_' || c == '-' ) {
                 out += c;
-            } else if (c == '_') { // _ --> _
-                out += c;
-            } else if (c == '-') { // - --> -
-                out += c;
-            } else if (c == '=') { // = --> xffff
-                out += "xffff";
-            } else { // --> xUNICODE
-                String hex = Integer.toHexString(code);
-                out += "x" + ("0000" + hex).substring(hex.length());
+            } else { // --> any other special character
+                out += '-';
             } // else
         } // for
 
