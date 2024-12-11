@@ -642,18 +642,17 @@ public class CKANBackend extends HttpBackend {
         if (dcatMetadata != null && dcatMetadata.getResourceName() != null) {
             resName = dcatMetadata.getResourceName();
         } else {
-
-            resName = entityTitle;
-
-            if (resName.length() > NGSIConstants.CKAN_MAX_NAME_LEN) {
-                throw new Exception("Building resource name '" + resName + "' and its length is "
-                        + "greater than " + NGSIConstants.CKAN_MAX_NAME_LEN);
-            } else if (resName.length() < NGSIConstants.CKAN_MIN_NAME_LEN) {
-                throw new Exception("Building resource name '" + resName + "' and its length is "
-                        + "lower than " + NGSIConstants.CKAN_MIN_NAME_LEN);
-            } // if else if
-
+            resName = entityTitle != null ? entityTitle : entity.getEntityId();
         }
+
+        if (resName.length() > NGSIConstants.CKAN_MAX_NAME_LEN) {
+            throw new Exception("Building resource name '" + resName + "' and its length is "
+                    + "greater than " + NGSIConstants.CKAN_MAX_NAME_LEN);
+        } else if (resName.length() < NGSIConstants.CKAN_MIN_NAME_LEN) {
+            throw new Exception("Building resource name '" + resName + "' and its length is "
+                    + "lower than " + NGSIConstants.CKAN_MIN_NAME_LEN);
+        } // if else if
+
         return resName;
     } // buildResName
 }
