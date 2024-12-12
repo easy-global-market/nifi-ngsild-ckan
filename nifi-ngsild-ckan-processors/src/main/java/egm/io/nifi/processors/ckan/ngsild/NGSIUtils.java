@@ -12,11 +12,13 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import static egm.io.nifi.processors.ckan.ngsild.NGSIConstants.*;
+
 
 public class NGSIUtils {
 
     public static List<String> IGNORED_KEYS_ON_ATTRIBUTES =
-            List.of("type", "value", "object", "datasetId", "createdAt", "modifiedAt", "instanceId", "observedAt");
+            List.of(NGSILD_TYPE, NGSILD_VALUE, NGSILD_OBJECT, NGSILD_CREATED_AT, NGSILD_MODIFIED_AT);
     private static final Logger logger = LoggerFactory.getLogger(NGSIUtils.class);
 
     public NGSIEvent getEventFromFlowFile(FlowFile flowFile, final ProcessSession session) {
@@ -41,59 +43,57 @@ public class NGSIUtils {
         NGSIEvent event= null;
 
         System.out.println("NGSI-LD Notification");
-        boolean hasSubAttrs= false;
-        data = (JSONArray) content.get("data");
+        data = (JSONArray) content.get(NGSILD_DATA);
         for (int i = 0; i < data.length(); i++) {
             JSONObject lData = data.getJSONObject(i);
-            entityId = lData.getString("id");
-            entityType = lData.getString("type");
+            entityId = lData.getString(NGSILD_ID);
+            entityType = lData.getString(NGSILD_TYPE);
             ArrayList<AttributesLD> attributes  = new ArrayList<>();
             Iterator<String> keys = lData.keys();
-            String attrType="";
+            String attrType;
             String attrValue="";
-            String subAttrName="";
-            String subAttrType="";
+            String subAttrName;
+            String subAttrType;
             String subAttrValue="";
             ArrayList<AttributesLD> subAttributes=new ArrayList<>();
 
             while (keys.hasNext()) {
                 String key = keys.next();
-                if (!"id".equals(key) && !"type".equals(key) && !"@context".equals(key)){
+                if (!NGSILD_ID.equals(key) && !NGSILD_TYPE.equals(key) && !NGSILD_CONTEXT.equals(key)){
                     JSONObject value = lData.getJSONObject(key);
-                    attrType = value.getString("type");
-                    if ("Relationship".contentEquals(attrType)){
-                        attrValue = value.get("object").toString();
-                    }else if ("Property".contentEquals(attrType)){
-                        attrValue = value.get("value").toString();
+                    attrType = value.getString(NGSILD_TYPE);
+                    if (NGSILD_RELATIONSHIP.contentEquals(attrType)){
+                        attrValue = value.get(NGSILD_OBJECT).toString();
+                    }else if (NGSILD_PROPERTY.contentEquals(attrType)){
+                        attrValue = value.get(NGSILD_VALUE).toString();
 
-                    }else if ("GeoProperty".contentEquals(attrType)){
-                        attrValue = value.get("value").toString();
+                    }else if (NGSILD_GEOPROPERTY.contentEquals(attrType)){
+                        attrValue = value.get(NGSILD_VALUE).toString();
                     }
                     Iterator<String> keysOneLevel = value.keys();
                     while (keysOneLevel.hasNext()) {
                         String keyOne = keysOneLevel.next();
-                        if ("type".equals(keyOne)){
+                        if (IGNORED_KEYS_ON_ATTRIBUTES.contains(keyOne)){
                             // Do Nothing
-                        } else if (IGNORED_KEYS_ON_ATTRIBUTES.contains(keyOne)){
+                        } else if (keyOne.equals(NGSILD_OBSERVED_AT) || keyOne.equals(NGSILD_UNIT_CODE)){
                             // Leave the value as it is
                             String value2 = value.getString(keyOne);
                             subAttrName = keyOne;
                             subAttrValue = value2;
-                            hasSubAttrs = true;
-                            subAttributes.add(new AttributesLD(subAttrName,subAttrValue,subAttrValue,false,null));
-                        } else if (!"value".equals(keyOne)){
+                            subAttributes.add(new AttributesLD(subAttrName,"NonReifiedProperty", subAttrValue,false,null));
+                        } else {
                             JSONObject value2 = value.getJSONObject(keyOne);
                             subAttrName=keyOne;
-                            subAttrType=value2.get("type").toString();
-                            if ("Relationship".contentEquals(subAttrType)){
-                                subAttrValue = value2.get("object").toString();
-                            }else if ("Property".contentEquals(subAttrType)){
-                                subAttrValue = value2.get("value").toString();
-                            }else if ("GeoProperty".contentEquals(subAttrType)){
-                                subAttrValue = value2.get("value").toString();
+                            subAttrType=value2.get(NGSILD_TYPE).toString();
+                            if (NGSILD_RELATIONSHIP.contentEquals(subAttrType)){
+                                subAttrValue = value2.get(NGSILD_OBJECT).toString();
+                            }else if (NGSILD_PROPERTY.contentEquals(subAttrType)){
+                                subAttrValue = value2.get(NGSILD_VALUE).toString();
+                            }else if (NGSILD_RELATIONSHIP.contentEquals(subAttrType)){
+                                subAttrValue = value2.get(NGSILD_VALUE).toString();
                             } else if ("RelationshipDetails".contains(keyOne)) {
-                                value2.remove("id");
-                                value2.remove("type");
+                                value2.remove(NGSILD_ID);
+                                value2.remove(NGSILD_TYPE);
 
                                 for (String relationKey : value2.keySet()) {
                                     Object object = value2.get(relationKey);
@@ -113,13 +113,11 @@ public class NGSIUtils {
                                     }
                                 }
                             }
-                            hasSubAttrs= true;
                             subAttributes.add(new AttributesLD(subAttrName,subAttrType,subAttrValue,false,null));
                         }
                     }
-                    attributes.add(new AttributesLD(key,attrType,attrValue, hasSubAttrs,subAttributes));
+                    attributes.add(new AttributesLD(key,attrType,attrValue, !subAttributes.isEmpty(),subAttributes));
                     subAttributes=new ArrayList<>();
-                    hasSubAttrs= false;
                 }
             }
             entities.add(new Entity(entityId,entityType,attributes));
@@ -129,14 +127,14 @@ public class NGSIUtils {
     }
 
     private AttributesLD parseNgsiLdSubAttribute(String key, JSONObject value) {
-        String subAttrType = value.get("type").toString();
+        String subAttrType = value.get(NGSILD_TYPE).toString();
         String subAttrValue = "";
-        if ("Relationship".contentEquals(subAttrType)) {
-            subAttrValue = value.get("object").toString();
-        } else if ("Property".contentEquals(subAttrType)) {
-            subAttrValue = value.get("value").toString();
-        } else if ("GeoProperty".contentEquals(subAttrType)) {
-            subAttrValue = value.get("value").toString();
+        if (NGSILD_RELATIONSHIP.contentEquals(subAttrType)) {
+            subAttrValue = value.get(NGSILD_OBJECT).toString();
+        } else if (NGSILD_PROPERTY.contentEquals(subAttrType)) {
+            subAttrValue = value.get(NGSILD_VALUE).toString();
+        } else if (NGSILD_GEOPROPERTY.contentEquals(subAttrType)) {
+            subAttrValue = value.get(NGSILD_VALUE).toString();
         }
 
         return new AttributesLD(key.toLowerCase(), subAttrType, subAttrValue, false, null);
