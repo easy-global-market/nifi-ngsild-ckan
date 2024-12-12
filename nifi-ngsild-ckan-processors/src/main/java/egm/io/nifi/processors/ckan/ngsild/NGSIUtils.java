@@ -43,7 +43,6 @@ public class NGSIUtils {
         NGSIEvent event= null;
 
         System.out.println("NGSI-LD Notification");
-        boolean hasSubAttrs= false;
         data = (JSONArray) content.get(NGSILD_DATA);
         for (int i = 0; i < data.length(); i++) {
             JSONObject lData = data.getJSONObject(i);
@@ -76,14 +75,12 @@ public class NGSIUtils {
                         String keyOne = keysOneLevel.next();
                         if (IGNORED_KEYS_ON_ATTRIBUTES.contains(keyOne)){
                             // Do Nothing
-                        } else if (keyOne.equals(NGSILD_OBSERVED_AT ) || keyOne.equals(NGSILD_UNIT_CODE)){
+                        } else if (keyOne.equals(NGSILD_OBSERVED_AT) || keyOne.equals(NGSILD_UNIT_CODE)){
                             // Leave the value as it is
                             String value2 = value.getString(keyOne);
                             subAttrName = keyOne;
                             subAttrValue = value2;
-                            hasSubAttrs = true;
-
-                            subAttributes.add(new AttributesLD(subAttrName,subAttrValue,subAttrValue,false,null));
+                            subAttributes.add(new AttributesLD(subAttrName,"NonReifiedProperty", subAttrValue,false,null));
                         } else {
                             JSONObject value2 = value.getJSONObject(keyOne);
                             subAttrName=keyOne;
@@ -116,13 +113,11 @@ public class NGSIUtils {
                                     }
                                 }
                             }
-                            hasSubAttrs= true;
                             subAttributes.add(new AttributesLD(subAttrName,subAttrType,subAttrValue,false,null));
                         }
                     }
-                    attributes.add(new AttributesLD(key,attrType,attrValue, hasSubAttrs,subAttributes));
+                    attributes.add(new AttributesLD(key,attrType,attrValue, !subAttributes.isEmpty(),subAttributes));
                     subAttributes=new ArrayList<>();
-                    hasSubAttrs= false;
                 }
             }
             entities.add(new Entity(entityId,entityType,attributes));
