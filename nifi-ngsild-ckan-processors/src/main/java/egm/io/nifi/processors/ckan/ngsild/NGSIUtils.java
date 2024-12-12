@@ -79,7 +79,9 @@ public class NGSIUtils {
                             String value2 = value.getString(keyOne);
                             subAttrName = keyOne;
                             subAttrValue = value2;
-                            hasSubAttrs = true;
+                            if(keyOne!= "type" || keyOne != "value" || keyOne != "object") {
+                                hasSubAttrs = true;
+                            }
                             subAttributes.add(new AttributesLD(subAttrName,subAttrValue,subAttrValue,false,null));
                         } else if (!"value".equals(keyOne)){
                             JSONObject value2 = value.getJSONObject(keyOne);
