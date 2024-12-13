@@ -1,6 +1,5 @@
 package egm.io.nifi.processors.ckan.ngsild;
 
-import org.apache.commons.collections.map.CaseInsensitiveMap;
 import org.apache.nifi.flowfile.FlowFile;
 import org.apache.nifi.processor.ProcessSession;
 import org.apache.nifi.stream.io.StreamUtils;
@@ -27,13 +26,7 @@ public class NGSIUtils {
         final Logger logger = LoggerFactory.getLogger(NGSIUtils.class);
 
         session.read(flowFile, in -> StreamUtils.fillBuffer(in, buffer));
-        // Create the PreparedStatement to use for this FlowFile.
-        Map<String, String> flowFileAttributes = flowFile.getAttributes();
-        Map <String,String> newFlowFileAttributes = new CaseInsensitiveMap(flowFileAttributes);
         final String flowFileContent = new String(buffer, StandardCharsets.UTF_8);
-        String fiwareService = (newFlowFileAttributes.get("fiware-service") == null) ? "nd":newFlowFileAttributes.get("fiware-service");
-        String fiwareServicePath = (newFlowFileAttributes.get("fiware-servicepath")==null) ? "/nd":newFlowFileAttributes.get("fiware-servicepath");
-        System.out.println(fiwareServicePath);
         long creationTime=flowFile.getEntryDate();
         JSONObject content = new JSONObject(flowFileContent);
         JSONArray data;
@@ -122,7 +115,7 @@ public class NGSIUtils {
             }
             entities.add(new Entity(entityId,entityType,attributes));
         }
-        event = new NGSIEvent(creationTime,fiwareService,entities);
+        event = new NGSIEvent(creationTime, entities);
         return event;
     }
 

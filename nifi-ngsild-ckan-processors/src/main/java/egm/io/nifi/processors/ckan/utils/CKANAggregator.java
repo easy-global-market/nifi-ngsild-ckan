@@ -21,7 +21,6 @@ public abstract class CKANAggregator {
     protected LinkedHashMap<String, ArrayList<JsonElement>> aggregation;
 
     // string containing the data fieldValues
-    protected String service;
     protected String entityForNaming;
     protected String entityTypeForNaming;
     protected String attributeForNaming;
@@ -68,10 +67,6 @@ public abstract class CKANAggregator {
     public void setAggregation(LinkedHashMap<String, ArrayList<JsonElement>> aggregation) {
         this.aggregation = aggregation;
     } //setAggregation
-
-    public void setService(String service) {
-        this.service = service;
-    }
 
     public void setEntityForNaming(String entityForNaming) {
         this.entityForNaming = entityForNaming;
@@ -160,7 +155,6 @@ public abstract class CKANAggregator {
             typedFieldNames = "("
                     + NGSIConstants.RECV_TIME_TS + " bigint,"
                     + NGSIConstants.RECV_TIME + " text,"
-                    + NGSIConstants.FIWARE_SERVICE_PATH + " text,"
                     + NGSIConstants.ENTITY_ID + " text,"
                     + NGSIConstants.ENTITY_TYPE + " text,"
                     + NGSIConstants.ATTR_NAME + " text,"
@@ -171,7 +165,6 @@ public abstract class CKANAggregator {
             fieldNames = "("
                     + NGSIConstants.RECV_TIME_TS + ","
                     + NGSIConstants.RECV_TIME + ","
-                    + NGSIConstants.FIWARE_SERVICE_PATH + ","
                     + NGSIConstants.ENTITY_ID + ","
                     + NGSIConstants.ENTITY_TYPE + ","
                     + NGSIConstants.ATTR_NAME + ","

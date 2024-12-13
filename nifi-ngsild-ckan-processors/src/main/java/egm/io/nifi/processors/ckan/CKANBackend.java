@@ -445,7 +445,6 @@ public class CKANBackend extends HttpBackend {
                 + "\", \"fields\": [ "
                 + "{ \"id\": \"" + NGSIConstants.RECV_TIME_TS + "\", \"type\": \"int\"},"
                 + "{ \"id\": \"" + NGSIConstants.RECV_TIME + "\", \"type\": \"timestamp\"},"
-                + "{ \"id\": \"" + NGSIConstants.FIWARE_SERVICE_PATH + "\", \"type\": \"text\"},"
                 + "{ \"id\": \"" + NGSIConstants.ENTITY_ID + "\", \"type\": \"text\"},"
                 + "{ \"id\": \"" + NGSIConstants.ENTITY_TYPE + "\", \"type\": \"text\"},"
                 + "{ \"id\": \"" + NGSIConstants.ATTR_NAME + "\", \"type\": \"text\"},"

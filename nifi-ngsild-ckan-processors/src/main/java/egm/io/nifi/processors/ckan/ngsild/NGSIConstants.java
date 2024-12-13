@@ -5,7 +5,6 @@ public final class NGSIConstants {
     // Common fields for sinks
     public static final String RECV_TIME_TS        = "recvTimeTs";
     public static final String RECV_TIME           = "recvTime";
-    public static final String FIWARE_SERVICE_PATH = "fiwareServicePath";
     public static final String ENTITY_ID           = "entityId";
     public static final String ENTITY_TYPE         = "entityType";
     public static final String ATTR_NAME           = "attrName";
