@@ -46,4 +46,14 @@ public class Entity {
     public void setEntityId(String entityId) {
         this.entityId = entityId;
     }
+
+    @Override
+    public String toString() {
+        return "Entity{" +
+                "entityId='" + entityId + '\'' +
+                ", entityType='" + entityType + '\'' +
+                ", entityAttrs=" + entityAttrs +
+                ", entityAttrsLD=" + entityAttrsLD +
+                '}';
+    }
 }

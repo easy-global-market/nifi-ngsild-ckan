@@ -49,4 +49,15 @@ public class AttributesLD {
         this.subAttrs= subAttrs;
 
     }
+
+    @Override
+    public String toString() {
+        return "AttributesLD{" +
+                "attrName='" + attrName + '\'' +
+                ", attrType='" + attrType + '\'' +
+                ", attrValue='" + attrValue + '\'' +
+                ", hasSubAttrs=" + hasSubAttrs +
+                ", subAttrs=" + (subAttrs != null ? subAttrs.toString() : "null") +
+                '}';
+    }
 }
