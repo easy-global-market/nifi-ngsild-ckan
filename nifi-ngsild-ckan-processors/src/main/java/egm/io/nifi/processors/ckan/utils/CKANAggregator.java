@@ -227,7 +227,8 @@ public abstract class CKANAggregator {
                 return;
             } // if
 
-            logger.info("Data to be aggregated: {}", entity);
+            logger.info("Entity to be aggregated: {}", entity);
+            logger.info("Entity attributes: {}", attributes);
 
             aggregation.get(NGSIConstants.RECV_TIME).add(new JsonPrimitive(recvTime));
             aggregation.get(NGSIConstants.ENTITY_ID).add(new JsonPrimitive(entityId));
