@@ -246,6 +246,8 @@ public abstract class CKANAggregator {
                 return;
             } // if
 
+            logger.info("Data to be aggregated: {}", entity);
+
             aggregation.get(NGSIConstants.RECV_TIME).add(new JsonPrimitive(recvTime));
             aggregation.get(NGSIConstants.ENTITY_ID).add(new JsonPrimitive(entityId));
             aggregation.get(NGSIConstants.ENTITY_TYPE).add(new JsonPrimitive(entityType));
@@ -271,6 +273,9 @@ public abstract class CKANAggregator {
                     }
                 }
             }// for
+
+            logger.info("Aggregated data: {}", aggregation);
+
             setAggregation(aggregation);
 
         } // aggregate
