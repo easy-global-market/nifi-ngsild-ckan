@@ -146,43 +146,6 @@ public abstract class CKANAggregator {
     public abstract void aggregate(Entity entity, long creationTime);
 
     /**
-     * Class for aggregating batches in row mode.
-     */
-    public class RowAggregator extends CKANAggregator {
-        @Override
-        public void initialize(Entity entity) throws Exception {
-            super.initialize(entity);
-            typedFieldNames = "("
-                    + NGSIConstants.RECV_TIME_TS + " bigint,"
-                    + NGSIConstants.RECV_TIME + " text,"
-                    + NGSIConstants.ENTITY_ID + " text,"
-                    + NGSIConstants.ENTITY_TYPE + " text,"
-                    + NGSIConstants.ATTR_NAME + " text,"
-                    + NGSIConstants.ATTR_TYPE + " text,"
-                    + NGSIConstants.ATTR_VALUE + " text,"
-                    + NGSIConstants.ATTR_MD + " text"
-                    + ")";
-            fieldNames = "("
-                    + NGSIConstants.RECV_TIME_TS + ","
-                    + NGSIConstants.RECV_TIME + ","
-                    + NGSIConstants.ENTITY_ID + ","
-                    + NGSIConstants.ENTITY_TYPE + ","
-                    + NGSIConstants.ATTR_NAME + ","
-                    + NGSIConstants.ATTR_TYPE + ","
-                    + NGSIConstants.ATTR_VALUE + ","
-                    + NGSIConstants.ATTR_MD
-                    + ")";
-        }
-
-        @Override
-        public void aggregate(Entity entity, long creationTime) {
-
-        }
-
-    }// RowAggregator
-
-
-    /**
      * Class for aggregating batches in column mode.
      */
     public class ColumnAggregator extends CKANAggregator {
@@ -245,12 +208,8 @@ public abstract class CKANAggregator {
 
     } // ColumnAggregator
 
-    public CKANAggregator getAggregator(boolean rowAttrPersistence) {
-        if (rowAttrPersistence) {
-            return new RowAggregator();
-        } else {
-            return new ColumnAggregator();
-        } // if else
+    public CKANAggregator getAggregator() {
+        return new ColumnAggregator();
     } // getAggregator
 
     /**
