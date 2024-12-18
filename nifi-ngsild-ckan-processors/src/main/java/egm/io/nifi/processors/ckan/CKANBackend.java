@@ -46,8 +46,7 @@ public class CKANBackend extends HttpBackend {
         logger.info("Going to lookup for the resource id, the cache may be updated during the process (orgName=\"{}\", " +
                 "pkgName=\"{}\", resName=\"{}\"" , orgName, pkgName, resName);
 
-        String resId;
-        resId= resourceLookupOrCreateDynamicFields(orgName, pkgName, pkgTitle, resName,records, dcatMetadata,createDataStore);
+        String resId = resourceLookupOrCreateDynamicFields(orgName, pkgName, pkgTitle, resName,records, dcatMetadata,createDataStore);
         if (resId == null) {
             throw new Exception("Cannot persist the data (orgName=" + orgName + ", pkgName=" + pkgName
                     + ", resName=" + resName + ")");
@@ -355,42 +354,6 @@ public class CKANBackend extends HttpBackend {
         } else {
             throw new Exception("Could not create the resource (pkgId=" + pkgId
                     + ", resName=" + resName + ", statusCode=" + res.getStatusCode() + ", response=" + res.getJsonObject().toString() + ")");
-        } // if else
-    } // createResource
-
-    /**
-     * Creates a datastore for a given resource in CKAN.
-     * @param resId Identifies the resource whose datastore is going to be created.
-     */
-    private void createDataStore(String resId, String resName) throws Exception {
-        // create the CKAN request JSON
-        // CKAN types reference: http://docs.ckan.org/en/ckan-2.2/datastore.html#valid-types
-        String jsonString = "{ \"resource_id\": \"" + resId
-                + "\", \"aliases\": [\""+resName+"\"+ ],"
-                + "\", \"fields\": [ "
-                + "{ \"id\": \"" + NGSIConstants.RECV_TIME_TS + "\", \"type\": \"int\"},"
-                + "{ \"id\": \"" + NGSIConstants.RECV_TIME + "\", \"type\": \"timestamp\"},"
-                + "{ \"id\": \"" + NGSIConstants.ENTITY_ID + "\", \"type\": \"text\"},"
-                + "{ \"id\": \"" + NGSIConstants.ENTITY_TYPE + "\", \"type\": \"text\"},"
-                + "{ \"id\": \"" + NGSIConstants.ATTR_NAME + "\", \"type\": \"text\"},"
-                + "{ \"id\": \"" + NGSIConstants.ATTR_TYPE + "\", \"type\": \"text\"},"
-                + "{ \"id\": \"" + NGSIConstants.ATTR_VALUE + "\", \"type\": \"json\"},"
-                + "{ \"id\": \"" + NGSIConstants.ATTR_MD + "\", \"type\": \"json\"}"
-                + "], "
-                + "\"force\": \"true\" }";
-
-        // create the CKAN request URL
-        String urlPath = "/api/3/action/datastore_create";
-
-        // do the CKAN request
-        JsonResponse res = doCKANRequest("POST", urlPath, jsonString);
-
-        // check the status
-        if (res.getStatusCode() == 200) {
-            logger.info("Successful datastore creation (resourceId=\"{}\")", resId);
-        } else {
-            throw new Exception("Could not create the datastore (resId=" + resId
-                    + ", statusCode=" + res.getStatusCode() + ", response=" + res.getJsonObject().toString() + ")");
         } // if else
     } // createResource
 

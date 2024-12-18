@@ -162,46 +162,35 @@ public class NgsiLdToCkan extends AbstractProcessor {
             }
         };
         aggregator = aggregator.getAggregator();
-        try {
 
-            final String orgName = ckanBackend.buildOrgName(organizationName, dcatMetadata);
-            ArrayList<Entity> entities = event.getEntitiesLD();
-            getLogger().info("[] Persisting data at NGSICKANSink (orgName=" + orgName+ ", ");
-            getLogger().debug("DCAT metadata: {}" , dcatMetadata);
+        final String orgName = ckanBackend.buildOrgName(organizationName, dcatMetadata);
+        ArrayList<Entity> entities = event.getEntitiesLD();
+        getLogger().info("[] Persisting data at NGSICKANSink (orgName=" + orgName+ ", ");
+        getLogger().debug("DCAT metadata: {}" , dcatMetadata);
 
-            for (Entity entity : entities) {
-                final String pkgTitle = flowFile.getAttribute("datasetTitle");
-                final String pkgName = ckanBackend.buildPkgName(pkgTitle, dcatMetadata);
-                final String resName = ckanBackend.buildResName(entity, dcatMetadata);
-                aggregator.initialize(entity);
-                aggregator.aggregate(entity, creationTime);
-                ArrayList<JsonObject> jsonObjects = CKANAggregator.linkedHashMapToJson(aggregator.getAggregationToPersist());
-                String  aggregation= "";
+        for (Entity entity : entities) {
+            final String pkgTitle = flowFile.getAttribute("datasetTitle");
+            final String pkgName = ckanBackend.buildPkgName(pkgTitle, dcatMetadata);
+            final String resName = ckanBackend.buildResName(entity, dcatMetadata);
+            aggregator.initialize(entity);
+            aggregator.aggregate(entity, creationTime);
+            ArrayList<JsonObject> jsonObjects = CKANAggregator.linkedHashMapToJson(aggregator.getAggregationToPersist());
+            String  aggregation= "";
 
-                for (JsonObject jsonObject : jsonObjects) {
-                    if (aggregation.isEmpty()) {
-                        aggregation = jsonObject.toString();
-                    } else {
-                        aggregation += "," + jsonObject;
-                    }
+            for (JsonObject jsonObject : jsonObjects) {
+                if (aggregation.isEmpty()) {
+                    aggregation = jsonObject.toString();
+                } else {
+                    aggregation += "," + jsonObject;
                 }
+            }
 
-                getLogger().info("[] Persisting data at NGSICKANSink (orgName=" + orgName
-                        + ", pkgName=" + pkgName + ", resName=" + resName + ", data=(" + aggregation + ")");
+            getLogger().info("[] Persisting data at NGSICKANSink (orgName=" + orgName
+                    + ", pkgName=" + pkgName + ", resName=" + resName + ", data=(" + aggregation + ")");
 
-                // Do try-catch only for metrics gathering purposes... after that, re-throw
-                try {
+            ckanBackend.persist(orgName, pkgName, pkgTitle, resName, aggregation, dcatMetadata,createDataStore);
+        } // for
 
-                    ckanBackend.persist(orgName, pkgName, pkgTitle, resName, aggregation, dcatMetadata,createDataStore);
-
-                } catch (Exception e) {
-                    throw e;
-                } // catch
-            } // for
-
-        }catch (Exception e){
-            throw e;
-        }
     }
 
     @Override

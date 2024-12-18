@@ -209,7 +209,7 @@ public abstract class CKANAggregator {
     } // ColumnAggregator
 
     public CKANAggregator getAggregator() {
-            return new ColumnAggregator();
+        return new ColumnAggregator();
     } // getAggregator
 
     /**
