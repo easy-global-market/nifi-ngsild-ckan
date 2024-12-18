@@ -4,7 +4,6 @@ import java.util.ArrayList;
 
 public class NGSIEvent {
     public long creationTime;
-    public ArrayList <Entity> entities;
     public ArrayList <Entity> entitiesLD;
 
     public NGSIEvent(long creationTime, ArrayList<Entity> entitiesLD ){
@@ -22,14 +21,6 @@ public class NGSIEvent {
 
     public void setCreationTime(long creationTime) {
         this.creationTime = creationTime;
-    }
-
-    public ArrayList<Entity> getEntities() {
-        return entities;
-    }
-
-    public void setEntities(ArrayList<Entity> entities) {
-        this.entities = entities;
     }
 
     public long getRecvTimeTs() {

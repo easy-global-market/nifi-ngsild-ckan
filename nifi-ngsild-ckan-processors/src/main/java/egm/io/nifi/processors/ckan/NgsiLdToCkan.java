@@ -28,9 +28,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @SupportsBatching
 @InputRequirement(InputRequirement.Requirement.INPUT_REQUIRED)
-@Tags({"CKAN","ckan","sql", "put", "rdbms", "database", "create", "insert", "relational","NGSIv2", "NGSI","FIWARE"})
-@CapabilityDescription("Create a CKAN resource, package and dataset if not exits using the information coming from and NGSI event converted to flow file." +
-        "After insert all of the vales of the flow file content extraction the entities and attributes")
+@Tags({"CKAN", "ckan", "Open Data", "NGSI-LD", "NGSI", "FIWARE"})
+@CapabilityDescription("Create a CKAN resource, package and dataset if not exists using the information coming from an NGSI-LD event converted to flow file." +
+        "After insert all of the values of the flow file content extraction the entities and attributes")
 public class NgsiLdToCkan extends AbstractProcessor {
     protected static final PropertyDescriptor CKAN_HOST = new PropertyDescriptor.Builder()
             .name("CKAN Host")
@@ -66,6 +66,7 @@ public class NgsiLdToCkan extends AbstractProcessor {
             .description("The APi Key you are going o use in CKAN")
             .required(true)
             .defaultValue("XXXXXX")
+            .sensitive(true)
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
 
@@ -165,7 +166,7 @@ public class NgsiLdToCkan extends AbstractProcessor {
 
         final String orgName = ckanBackend.buildOrgName(organizationName, dcatMetadata);
         ArrayList<Entity> entities = event.getEntitiesLD();
-        getLogger().info("[] Persisting data at NGSICKANSink (orgName=" + orgName+ ", ");
+        getLogger().info("Persisting data at NGSICKANSink: orgName=" + orgName);
         getLogger().debug("DCAT metadata: {}" , dcatMetadata);
 
         for (Entity entity : entities) {
@@ -185,8 +186,8 @@ public class NgsiLdToCkan extends AbstractProcessor {
                 }
             }
 
-            getLogger().info("[] Persisting data at NGSICKANSink (orgName=" + orgName
-                    + ", pkgName=" + pkgName + ", resName=" + resName + ", data=(" + aggregation + ")");
+            getLogger().info("Persisting data at NGSICKANSink: orgName=" + orgName
+                    + ", pkgName=" + pkgName + ", resName=" + resName + ", data=" + aggregation);
 
             ckanBackend.persist(orgName, pkgName, pkgTitle, resName, aggregation, dcatMetadata,createDataStore);
         } // for
