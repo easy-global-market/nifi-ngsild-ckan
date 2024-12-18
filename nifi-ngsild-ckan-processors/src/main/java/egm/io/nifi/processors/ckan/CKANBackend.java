@@ -40,18 +40,14 @@ public class CKANBackend extends HttpBackend {
         cache = new CKANCache(ckanHost, ckanPort, ssl, apiKey);
     } // CKANBackendImpl
 
-    public void persist(String orgName, String pkgName, String pkgTitle, String resName, String records, boolean createEnabled, DCATMetadata dcatMetadata, boolean createDataStore)
+    public void persist(String orgName, String pkgName, String pkgTitle, String resName, String records, DCATMetadata dcatMetadata, boolean createDataStore)
             throws Exception {
 
         logger.info("Going to lookup for the resource id, the cache may be updated during the process (orgName=\"{}\", " +
                 "pkgName=\"{}\", resName=\"{}\"" , orgName, pkgName, resName);
 
         String resId;
-        if (!createEnabled) {
-            resId= resourceLookupOrCreateDynamicFields(orgName, pkgName, pkgTitle, resName,records, dcatMetadata,createDataStore);
-        } else {
-            resId = resourceLookupOrCreate(orgName, pkgName, pkgTitle, resName, createEnabled, dcatMetadata,createDataStore);
-        }
+        resId= resourceLookupOrCreateDynamicFields(orgName, pkgName, pkgTitle, resName,records, dcatMetadata,createDataStore);
         if (resId == null) {
             throw new Exception("Cannot persist the data (orgName=" + orgName + ", pkgName=" + pkgName
                     + ", resName=" + resName + ")");
@@ -138,79 +134,8 @@ public class CKANBackend extends HttpBackend {
         logger.info("The resource was cached (orgName=\"{}\", pkgName=\"{}\", resName=\"{}\")", orgName, pkgName, resName);
 
         return cache.getResId(orgName, pkgName, resName);
-    } // resourceLookupOrCreate
+    } // resourceLookupOrCreateDynamicFields
 
-    private String resourceLookupOrCreate(String orgName, String pkgName, String pkgTitle, String resName, boolean createEnabled, DCATMetadata dcatMetadata, boolean createDataStore)
-            throws Exception {
-        if (!cache.isCachedOrg(orgName)) {
-            if (createEnabled) {
-                logger.info("The organization was not cached nor existed in CKAN (orgName=\"{}\")", orgName);
-                String orgId = createOrganization(orgName,dcatMetadata);
-                cache.addOrg(orgName);
-                cache.setOrgId(orgName, orgId);
-                logger.info("Created new organization in CKAN (orgName=\"{}\", orgId=\"{}\")", orgName, orgId);
-
-                String pkgId = createPackage(pkgName, pkgTitle, orgId, dcatMetadata);
-                cache.addPkg(orgName, pkgName);
-                cache.setPkgId(orgName, pkgName, pkgId);
-                String resId = createResource(resName, pkgId, dcatMetadata);
-                cache.addRes(orgName, pkgName, resName);
-                cache.setResId(orgName, pkgName, resName, resId);
-                if(createDataStore){
-                    createDataStore(resId, resName);
-                    createView(resId);
-                }
-                return resId;
-            } else {
-                return null;
-            } // if else
-        } // if
-
-        logger.info("The organization was cached (orgName=\"{}\")", orgName);
-
-        if (!cache.isCachedPkg(orgName, pkgName)) {
-            logger.info("The package was not cached nor existed in CKAN (orgName=\"{}\", pkgName=\"{}\")", orgName, pkgName);
-
-            if (createEnabled) {
-                String pkgId = createPackage(pkgName, pkgTitle, cache.getOrgId(orgName), dcatMetadata);
-                cache.addPkg(orgName, pkgName);
-                cache.setPkgId(orgName, pkgName, pkgId);
-                String resId = createResource(resName, pkgId, dcatMetadata);
-                cache.addRes(orgName, pkgName, resName);
-                cache.setResId(orgName, pkgName, resName, resId);
-                if(createDataStore){
-                    createDataStore(resId, resName);
-                    createView(resId);
-                }
-                return resId;
-            } else {
-                return null;
-            } // if else
-        } // if
-
-        logger.info("The package was cached (orgName=\"{}\", pkgName=\"{}\")", orgName, pkgName);
-
-        if (!cache.isCachedRes(orgName, pkgName, resName)) {
-            logger.info("The resource was not cached nor existed in CKAN (orgName=\"{}\", pkgName=\"{}\", resName=\"{}\")", orgName, pkgName, resName);
-
-            if (createEnabled) {
-                String resId = this.createResource(resName, cache.getPkgId(orgName, pkgName), dcatMetadata);
-                cache.addRes(orgName, pkgName, resName);
-                cache.setResId(orgName, pkgName, resName, resId);
-                if(createDataStore){
-                    createDataStore(resId, resName);
-                    createView(resId);
-                }
-                return resId;
-            } else {
-                return null;
-            } // if else
-        } // if
-
-        logger.info("The resource was cached (orgName=\"{}\", pkgName=\"{}\", resName=\"{}\")", orgName, pkgName, resName);
-
-        return cache.getResId(orgName, pkgName, resName);
-    } // resourceLookupOrCreate
 
     /**
      * Insert records in the datastore.
