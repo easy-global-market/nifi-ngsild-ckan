@@ -1,7 +1,5 @@
 # NgsiLdToCkan
 
-[![FIWARE](https://nexus.lab.fiware.org/repository/raw/public/badges/chapters/core.svg)](https://www.fiware.org/developers/catalogue/)
-[![NGSI-LD badge](https://img.shields.io/badge/NGSI-LD-red.svg)](https://www.etsi.org/deliver/etsi_gs/CIM/001_099/009/01.06.01_60/gs_CIM009v010601p.pdf)
 [![License: Apache-2.0](https://img.shields.io/github/license/stellio-hub/stellio-context-broker.svg)](https://spdx.org/licenses/Apache-2.0.html)
 ![Build](https://github.com/easy-global-market/nifi-ngsild-ckan/actions/workflows/maven.yml/badge.svg)
 
@@ -15,21 +13,42 @@
    - [Processor Properties](#processor-properties)
 - [Metadata](#metadata)
    - [Metadata List](#metadata-list)
+- [Limitations](#limitations)
 
 ## Overview
-`NgsiLdToCkan` is a Nifi processor developed by FIWARE to persist NGSI-LD context data events within a [CKAN](https://ckan.org/) server. Context data is received as a notification sent by a Context Broker or any system that supports NGSI-LD.
+`NgsiLdToCkan` is a NiFi processor developed to persist NGSI-LD context data events within a [CKAN](https://ckan.org/) server. Context data is received as a notification sent by a Context Broker or any system that supports NGSI-LD.
 
 
 ## Functionality
 
-The processor receives NGSI-LD events (notifications) and converts them internally into an `NGSIEvent` objects, which contain the entities to be published on the CKAN server.
+The processor receives NGSI-LD events (notifications) which contain the entities to be published on the CKAN server.
 
 ### CKAN Data Structures And Mapping
 
 CKAN is a powerful platform for managing and publishing collections of data. These collections are owned by organizations. Each organization contains multiple datasets (also called packages) and every dataset consists of several resources. 
 A resource is the structure that holds the data itself. In addition, a dataset can also contain metadata (information about the context data).
 
-When context data is consumed by the `NgsiLdToCkan` processor, each entity will be persisted in the CKAN server as a resource belonging to an organization and a dataset. 
+CKAN offers a generic mapping between its model and [DCAT](https://www.w3.org/TR/vocab-dcat-3/) classes like `dcat:Dataset` and `dcat:Distribution`. 
+
+In this mapping, a `Dataset` entity in the Context Broker is equivalent to a dataset in CKAN, while a `Distribution` entity is equivalent to a resource. However, a `Catalog` entity is not directly equivalent to an organization
+because the concept of an organization in CKAN does not directly align with the concept of a `dcat:Catalog`. Therefore, a `X-CKAN-OrganizationName` key-value pair must be added to the `receiverInfo` in the `Subscription` that triggers 
+the notified context data. This value will be used as the name of the organization owning the resource. 
+
+```
+"endpoint": {
+    "uri": "http://localhost:8080/ckanListener",
+    "accept": "application/json",
+    "receiverInfo": [
+        {
+            "key": "X-CKAN-OrganizationName",
+            "value": "Organization Name"
+        }
+    ]
+}
+```
+
+
+A more straight-forward mapping from CKAN metadata to DCAT metadata is also done.
 
 ### Input Data
 
@@ -69,7 +88,7 @@ Names for an organization, a dataset, or a resource must only contain alphanumer
 ```
 ### Output
 
-The `NgsiLdToCkan` processor publishes all entities received in the notified context data in the same dataset. Each entity will be added as a resource 
+The `NgsiLdToCkan` processor publishes all entities of the same type received in the notified context data in the same dataset. Each entity will be added as a resource 
 with a default `application/ld+json` format.
 
 ## Configuration
@@ -118,3 +137,12 @@ with a default `application/ld+json` format.
 | byteSize               |
 | resourceRights         |
 | licenseType            |
+
+
+## Limitations
+
+* The processor does not support multi-attributes instances.
+* The processor only supports attributes of type `Property`, `Relationship` and `GeoProperty`. 
+* An already existing resource can't be updated with new attributes.
+* There's no description for datasets.
+* Not all DCAT metadata available in a dataset is utilized (for example `publisher` metadata which can be used when creating an organization)
