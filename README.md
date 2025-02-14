@@ -18,42 +18,47 @@
 - [Roadmap & Issues](#roadmap--issues)
 
 ## Overview
-`NgsiLdToCkan` is a NiFi processor developed to persist NGSI-LD context data within a [CKAN](https://ckan.org/) server. Context data is received as a notification sent by a Context Broker or any system that supports NGSI-LD.
 
+`NgsiLdToCkan` is a NiFi processor that persists NGSI-LD entities within a [CKAN](https://ckan.org/) server.
+Entities are received through NGSI-LD notifications sent by a NGSI-LD Context Broker.
 
 ## Functionality
 
-The processor receives NGSI-LD notifications which contain the entities to be published on the CKAN server.
-
 ### CKAN Data Structures And Mapping
 
-CKAN is a powerful platform for managing and publishing collections of data. These collections are owned by organizations. Each organization contains multiple datasets (also called packages) and every dataset consists of several resources. 
-A resource is the structure that holds the data itself. In addition, a dataset can also contain metadata (information about the context data).
+CKAN is a powerful platform for managing and publishing collections of data. These collections are owned by organizations.
+Each organization contains multiple datasets (called packages in CKAN) and every dataset consists of several resources. 
+A resource is the structure that holds the data itself. In addition, a dataset also contains metadata (information about the data).
 
-CKAN offers a generic mapping between its model and [DCAT](https://www.w3.org/TR/vocab-dcat-3/) classes like `dcat:Dataset` and `dcat:Distribution`. 
+CKAN offers a generic mapping between its model and [DCAT](https://www.w3.org/TR/vocab-dcat-3/) classes like `dcat:Catalog`, `dcat:Dataset` and `dcat:Distribution`. 
 
-In this mapping, a `Dataset` entity in the Context Broker is equivalent to a dataset in CKAN, while a `Distribution` entity is equivalent to a resource. However, a `Catalog` entity is not directly equivalent to an organization
+In this mapping, a `Dataset` entity in the Context Broker is equivalent to a dataset in CKAN, while a `Distribution` entity 
+is equivalent to a resource. However, a `Catalog` entity is not directly equivalent to an organization
 because the concept of an organization in CKAN does not directly align with the concept of a `dcat:Catalog`. 
 
 A more straight-forward mapping from CKAN metadata to DCAT metadata is also done.
 
-
 For more in-depth information about `dcat:Dataset` and `dcat:Distribution` see [Smart data models - DCAT data model](https://github.com/smart-data-models/dataModel.DCAT-AP).
+
+When creating datasets and resources in CKAN, the processor leverages the attributes in the received NGSI-LD entities to
+enrich the created datasets and resources with the metadata that it can extract from the NGSI-LD entities. One goal of this
+behavior is also to expose datasets and resources that comply with the [FAIR principles](https://www.go-fair.org/fair-principles/).
 
 ### Input Data
 
-The input data must be a valid NGSI-LD context data with a `data` element containing the entities to be persisted in the CKAN server. Each entity must have a `title` attribute that will
-be used as a resource name. A `datasetTitle` must exist as a flowfile attribute to be used as a dataset name.
+The input data must be a valid NGSI-LD notification containing the entities to be persisted in the CKAN server.
+Each entity must at leat have a `title` attribute that will be used as the name of the resource. 
+A `datasetTitle` must exist as a flowfile attribute to be used as the name of the dataset belonging to the resource.
+(future versions of the processor will automatically retrieve dataset information by using the relationship between a
+`Distribution` entity and a `Dataset` entity).
 
-In addition, metadata can also be added as flowfile attributes to be extracted by the processor. The `keywords` attribute however must always be present. 
-It is a comma seperated list of terms that will be added as tags to the dataset: ["keyword1", "keyword2", "keyword3"] .
+In addition, other metadata can also be added as flowfile attributes to be extracted by the processor.
+The `keywords` attribute however must always be present. It is a comma seperated list of terms that will be added as tags 
+to the dataset (e.g., ["keyword1", "keyword2", "keyword3"]).
 
-**Naming conventions**
+**Example of a NGSI-LD notification received by the processor**
 
-Names for an organization, a dataset, or a resource must only contain alphanumeric characters, `-` , or `_`. The length must be between 2 and 100 characters.
-
-**Example of a NGSI-LD notification the processor receives**
-```
+```json
 {
     "id": "urn:ngsi-ld:Notification:1",
     "type": "Notification",
@@ -61,8 +66,8 @@ Names for an organization, a dataset, or a resource must only contain alphanumer
     "notifiedAt": "2025-02-10T13:29:53.903986Z",
     "data": [
         {
-            "id": "urn:ngsi-ld:Entity:1",
-            "type": "Entity",
+            "id": "urn:ngsi-ld:Distribution:1",
+            "type": "Distribution",
             "title": {
                 "type": "Property",
                 "value": "Entity example"
@@ -76,25 +81,30 @@ Names for an organization, a dataset, or a resource must only contain alphanumer
     ]
 }
 ```
+
 ### Output
 
-The `NgsiLdToCkan` processor publishes all entities of the same type received in the notified context data in the same dataset. Each entity will be added as a resource 
-with a default `application/ld+json` format.
+The `NgsiLdToCkan` processor publishes all entities of the same type in the same dataset.
+Each entity is as a resource with a default `application/ld+json` format.
+
+In CKAN, names for an organization, a dataset, or a resource must only contain alphanumeric characters, `-` , or `_`.
+The length must be between 2 and 100 characters. Thus, a transformation is automatically performed by the processor. 
 
 ## Requirements
 
 A `Subscription` must be created to trigger the notifications sent when entities are created or updated.
 
-Since there is no direct mapping between `dcat:Catalog` and an organization in CKAN, a `X-CKAN-OrganizationName` key-value pair must be added to the `receiverInfo` in the `Subscription`.
-This value will be extracted in the processor as a flowfile attribute and used as the name of the organization owning the resource.
+Since there is no direct mapping between `dcat:Catalog` and an organization in CKAN, a `X-CKAN-OrganizationName` key-value pair
+must be added to the `receiverInfo` in the `Subscription`. This value will be extracted in the processor as a flowfile 
+attribute and used as the name of the organization owning the resource.
 
-```
+```json
 {
     "id": "urn:ngsi-ld:Subscription:CKAN",
     "type": "Subscription",
     "entities": [
         {
-            "type": "Dataset"
+            "type": "Distribution"
         }
     ],
     "notificationTrigger": [
@@ -127,7 +137,7 @@ This value will be extracted in the processor as a flowfile attribute and used a
 
 * `CKAN API Key` property is a token generated from the user account on the CKAN site. 
 
-* `Create DataStore` property creates the resource when set to true.
+* `Create DataStore` property creates the resource in the datastore when set to true.
 
 ## Metadata
 
@@ -168,9 +178,10 @@ as flowfile attributes and its equivalent in `dcat:Dataset` and `dcat:Distributi
 
 
 ## Template
+
 A basic NiFi template with the `NgsiLdToCkan` processor can be found [here](CKAN_User_Guide_Template.xml).
 
-## Limitations
+## Current limitations
 
 * The processor does not support multi-attributes instances.
 * The processor only supports attributes of type `Property`, `Relationship` and `GeoProperty`. 
