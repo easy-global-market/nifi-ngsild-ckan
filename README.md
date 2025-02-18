@@ -30,7 +30,7 @@ CKAN is a powerful platform for managing and publishing collections of data. The
 Each organization contains multiple datasets (called packages in CKAN) and every dataset consists of several resources. 
 A resource is the structure that holds the data itself. In addition, a dataset also contains metadata (information about the data).
 
-CKAN offers a generic mapping between its model and [DCAT](https://www.w3.org/TR/vocab-dcat-3/) classes like `dcat:Catalog`, `dcat:Dataset` and `dcat:Distribution`. 
+CKAN offers a generic mapping between its model and [DCAT](https://www.w3.org/TR/vocab-dcat-3/) classes like `dcat:Dataset` and `dcat:Distribution`. 
 
 In this mapping, a `Dataset` entity in the Context Broker is equivalent to a dataset in CKAN, while a `Distribution` entity 
 is equivalent to a resource. However, a `Catalog` entity is not directly equivalent to an organization
