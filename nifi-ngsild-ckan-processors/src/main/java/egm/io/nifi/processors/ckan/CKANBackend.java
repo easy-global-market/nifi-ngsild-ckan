@@ -221,8 +221,6 @@ public class CKANBackend extends HttpBackend {
             dataJson.addProperty("version",dcatMetadata.getVersion());
             dataJson.addProperty("url",dcatMetadata.getLandingPage());
             dataJson.addProperty("visibility",dcatMetadata.getVisibility());
-            dataJson.addProperty("url",dcatMetadata.getLandingPage());
-
 
             extrasJson.addProperty("key","publisher_type");
             extrasJson.addProperty("value",dcatMetadata.getOrganizationType());
@@ -528,8 +526,7 @@ public class CKANBackend extends HttpBackend {
         if (dcatMetadata != null && dcatMetadata.getResourceName() != null) {
             resName = dcatMetadata.getResourceName();
         } else {
-            String entityTitle = ngsiUtils.getSpecificAttributeValue(entity, "title");
-            resName = entityTitle != null ? entityTitle : entity.getEntityId();
+            resName = entity.getEntityId();
         }
 
         if (resName.length() > NGSIConstants.CKAN_MAX_NAME_LEN) {
