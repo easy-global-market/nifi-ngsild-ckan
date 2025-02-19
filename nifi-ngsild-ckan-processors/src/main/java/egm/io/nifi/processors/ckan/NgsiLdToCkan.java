@@ -171,11 +171,10 @@ public class NgsiLdToCkan extends AbstractProcessor {
 
         for (Entity entity : entities) {
 
-            // Update DCATMetadata with entity attributes
+            // Update DCATMetadata with Distribution entity attributes
             buildDCATMetadata.addMetadataFromEntity(entity, dcatMetadata);
 
-            final String pkgTitle = flowFile.getAttribute("datasetTitle");
-            final String pkgName = ckanBackend.buildPkgName(pkgTitle, dcatMetadata);
+            final String pkgName = ckanBackend.buildPkgName(dcatMetadata);
             final String resName = ckanBackend.buildResName(entity, dcatMetadata);
             aggregator.initialize(entity);
             aggregator.aggregate(entity, creationTime);
@@ -193,7 +192,7 @@ public class NgsiLdToCkan extends AbstractProcessor {
             getLogger().info("Persisting data at NGSICKANSink: orgName=" + orgName
                     + ", pkgName=" + pkgName + ", resName=" + resName + ", data=" + aggregation);
 
-            ckanBackend.persist(orgName, pkgName, pkgTitle, resName, aggregation, dcatMetadata,createDataStore);
+            ckanBackend.persist(orgName, pkgName, resName, aggregation, dcatMetadata, createDataStore);
         } // for
 
     }

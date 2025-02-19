@@ -13,7 +13,6 @@ import java.util.Map;
 import static egm.io.nifi.processors.ckan.ngsild.NGSIConstants.JSON_LD_FORMAT;
 
 public class BuildDCATMetadata {
-    final NGSIUtils ngsiUtils = new NGSIUtils();
     public DCATMetadata getMetadataFromFlowFile(FlowFile flowFile, final ProcessSession session) {
 
         final byte[] buffer = new byte[(int) flowFile.getSize()];
@@ -28,7 +27,7 @@ public class BuildDCATMetadata {
                 newFlowFileAttributes.get("organizationName"),
                 newFlowFileAttributes.get("organizationType"),
                 newFlowFileAttributes.get("packageDescription"),
-                newFlowFileAttributes.get("packageName"),
+                newFlowFileAttributes.get("datasetTitle"),
                 newFlowFileAttributes.get("contactPoint"),
                 newFlowFileAttributes.get("contactName"),
                 newFlowFileAttributes.get("contactEmail"),
@@ -57,17 +56,16 @@ public class BuildDCATMetadata {
         );
     }
 
-    public void addMetadataFromEntity (Entity entity, DCATMetadata dcatMetadata) {
-        dcatMetadata.setAccessURL(ngsiUtils.getSpecificAttributeValue(entity, "accessURL"));
-        dcatMetadata.setAvailability(ngsiUtils.getSpecificAttributeValue(entity, "availability"));
-        dcatMetadata.setMimeType(ngsiUtils.getSpecificAttributeValue(entity, "mediaType"));
-        dcatMetadata.setLicense(ngsiUtils.getSpecificAttributeValue(entity, "license"));
-        dcatMetadata.setDownloadURL(ngsiUtils.getSpecificAttributeValue(entity, "downloadURL"));
-        dcatMetadata.setByteSize(ngsiUtils.getSpecificAttributeValue(entity, "byteSize"));
-        dcatMetadata.setResourceRights(ngsiUtils.getSpecificAttributeValue(entity, "rights"));
-        dcatMetadata.setResourceDescription(ngsiUtils.getSpecificAttributeValue(entity, "description"));
-        dcatMetadata.setResourceName(ngsiUtils.getSpecificAttributeValue(entity, "title"));
-        dcatMetadata.setLicenseType(ngsiUtils.getSpecificAttributeValue(entity, "licenseType"));
-
+    public void addMetadataFromEntity(Entity entity, DCATMetadata dcatMetadata) {
+        dcatMetadata.setAccessURL(NGSIUtils.getSpecificAttributeValue(entity, "accessURL"));
+        dcatMetadata.setAvailability(NGSIUtils.getSpecificAttributeValue(entity, "availability"));
+        dcatMetadata.setMimeType(NGSIUtils.getSpecificAttributeValue(entity, "mediaType"));
+        dcatMetadata.setLicense(NGSIUtils.getSpecificAttributeValue(entity, "license"));
+        dcatMetadata.setDownloadURL(NGSIUtils.getSpecificAttributeValue(entity, "downloadURL"));
+        dcatMetadata.setByteSize(NGSIUtils.getSpecificAttributeValue(entity, "byteSize"));
+        dcatMetadata.setResourceRights(NGSIUtils.getSpecificAttributeValue(entity, "rights"));
+        dcatMetadata.setResourceDescription(NGSIUtils.getSpecificAttributeValue(entity, "description"));
+        dcatMetadata.setResourceName(NGSIUtils.getSpecificAttributeValue(entity, "title"));
+        dcatMetadata.setLicenseType(NGSIUtils.getSpecificAttributeValue(entity, "licenseType"));
     }
 }
