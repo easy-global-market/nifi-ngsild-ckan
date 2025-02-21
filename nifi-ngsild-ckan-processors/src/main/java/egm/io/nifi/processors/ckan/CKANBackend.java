@@ -40,13 +40,13 @@ public class CKANBackend extends HttpBackend {
         cache = new CKANCache(ckanHost, ckanPort, ssl, apiKey);
     } // CKANBackendImpl
 
-    public void persist(String orgName, String pkgName, String pkgTitle, String resName, String records, DCATMetadata dcatMetadata, boolean createDataStore)
+    public void persist(String orgName, String pkgName, String resName, String records, DCATMetadata dcatMetadata, boolean createDataStore)
             throws Exception {
 
         logger.info("Going to lookup for the resource id, the cache may be updated during the process (orgName=\"{}\", " +
                 "pkgName=\"{}\", resName=\"{}\"" , orgName, pkgName, resName);
 
-        String resId = resourceLookupOrCreateDynamicFields(orgName, pkgName, pkgTitle, resName,records, dcatMetadata,createDataStore);
+        String resId = resourceLookupOrCreateDynamicFields(orgName, pkgName, resName,records, dcatMetadata,createDataStore);
         if (resId == null) {
             throw new Exception("Cannot persist the data (orgName=" + orgName + ", pkgName=" + pkgName
                     + ", resName=" + resName + ")");
@@ -72,7 +72,7 @@ public class CKANBackend extends HttpBackend {
      * @param resName The resource name to be created or lookup to
      * @param records Te records to be inserted and used to create the datastore fields
      */
-    private String resourceLookupOrCreateDynamicFields(String orgName, String pkgName, String pkgTitle, String resName, String records,DCATMetadata dcatMetadata, boolean createDataStore)
+    private String resourceLookupOrCreateDynamicFields(String orgName, String pkgName, String resName, String records,DCATMetadata dcatMetadata, boolean createDataStore)
             throws Exception {
         if (!cache.isCachedOrg(orgName)) {
             logger.info("The organization was not cached nor existed in CKAN (orgName=\"{}\")", orgName);
@@ -81,7 +81,7 @@ public class CKANBackend extends HttpBackend {
             cache.setOrgId(orgName, orgId);
             logger.info("Created new organization in CKAN (orgName=\"{}\", orgId=\"{}\")", orgName, orgId);
 
-            String pkgId = createPackage(pkgName, pkgTitle, orgId, dcatMetadata);
+            String pkgId = createPackage(pkgName, orgId, dcatMetadata);
             cache.addPkg(orgName, pkgName);
             cache.setPkgId(orgName, pkgName, pkgId);
             String resId = createResource(resName, pkgId, dcatMetadata);
@@ -100,7 +100,7 @@ public class CKANBackend extends HttpBackend {
         if (!cache.isCachedPkg(orgName, pkgName)) {
             logger.info("The package was not cached nor existed in CKAN (orgName=\"{}\", pkgName=\"{}\")", orgName, pkgName);
 
-            String pkgId = createPackage(pkgName, pkgTitle, cache.getOrgId(orgName), dcatMetadata);
+            String pkgId = createPackage(pkgName, cache.getOrgId(orgName), dcatMetadata);
             cache.addPkg(orgName, pkgName);
             cache.setPkgId(orgName, pkgName, pkgId);
             String resId = createResource(resName, pkgId, dcatMetadata);
@@ -200,11 +200,10 @@ public class CKANBackend extends HttpBackend {
     /**
      * Creates a dataset/package within a given organization in CKAN.
      * @param pkgName Package to be created
-     * @param pkgTitle Package title
      * @param orgId Organization the package belongs to
      * @return A package identifier if the package was created or an exception if something went wrong
      */
-    private String createPackage(String pkgName, String pkgTitle, String orgId, DCATMetadata dcatMetadata) throws Exception {
+    private String createPackage(String pkgName, String orgId, DCATMetadata dcatMetadata) throws Exception {
         // create the CKAN request JSON
         JsonArray extrasJsonArray = new JsonArray();
         JsonArray tagsJsonArray = new JsonArray();
@@ -215,68 +214,64 @@ public class CKANBackend extends HttpBackend {
         JsonObject dataJson = new JsonObject();
         dataJson.addProperty("name",pkgName);
         dataJson.addProperty("owner_org",orgId);
-        dataJson.addProperty("title", pkgTitle);
-        if (dcatMetadata!=null){
-            dataJson.addProperty("notes",dcatMetadata.getPackageDescription());
-            dataJson.addProperty("version",dcatMetadata.getVersion());
-            dataJson.addProperty("url",dcatMetadata.getLandingPage());
-            dataJson.addProperty("visibility",dcatMetadata.getVisibility());
-            dataJson.addProperty("url",dcatMetadata.getLandingPage());
+        dataJson.addProperty("title", dcatMetadata.getPackageName());
+        dataJson.addProperty("notes", dcatMetadata.getPackageDescription());
+        dataJson.addProperty("version",dcatMetadata.getVersion());
+        dataJson.addProperty("url",dcatMetadata.getLandingPage());
+        dataJson.addProperty("visibility",dcatMetadata.getVisibility());
+
+        extrasJson.addProperty("key","publisher_type");
+        extrasJson.addProperty("value",dcatMetadata.getOrganizationType());
+        extrasJsonArray.add(extrasJson);
+        extrasJson=new JsonObject();
+        extrasJson.addProperty("key","contact_uri");
+        extrasJson.addProperty("value",dcatMetadata.getContactPoint());
+        extrasJsonArray.add(extrasJson);
+        extrasJson=new JsonObject();
+        extrasJson.addProperty("key","contact_name");
+        extrasJson.addProperty("value",dcatMetadata.getContactName());
+        extrasJsonArray.add(extrasJson);
+        extrasJson=new JsonObject();
+        extrasJson.addProperty("key","contact_email");
+        extrasJson.addProperty("value",dcatMetadata.getContactEmail());
+        extrasJsonArray.add(extrasJson);
+        extrasJson=new JsonObject();
+        extrasJson.addProperty("key","spatial_uri");
+        extrasJson.addProperty("value",dcatMetadata.getSpatialUri());
+        extrasJsonArray.add(extrasJson);
+        extrasJson=new JsonObject();
+        extrasJson.addProperty("key","spatial");
+        extrasJson.addProperty("value",dcatMetadata.getSpatialCoverage());
+        extrasJsonArray.add(extrasJson);
+        extrasJson=new JsonObject();
+        extrasJson.addProperty("key","temporal_start");
+        extrasJson.addProperty("value",dcatMetadata.getTemporalStart());
+        extrasJsonArray.add(extrasJson);
+        extrasJson=new JsonObject();
+        extrasJson.addProperty("key","temporal_end");
+        extrasJson.addProperty("value",dcatMetadata.getTemporalEnd());
+        extrasJsonArray.add(extrasJson);
+        extrasJson=new JsonObject();
+        extrasJson.addProperty("key","theme");
+        extrasJson.addProperty("value",dcatMetadata.getThemes());
+        extrasJsonArray.add(extrasJson);
+        extrasJson=new JsonObject();
+        extrasJson.addProperty("key","access_rights");
+        extrasJson.addProperty("value",dcatMetadata.getDatasetRights());
+        extrasJsonArray.add(extrasJson);
 
 
-            extrasJson.addProperty("key","publisher_type");
-            extrasJson.addProperty("value",dcatMetadata.getOrganizationType());
-            extrasJsonArray.add(extrasJson);
-            extrasJson=new JsonObject();
-            extrasJson.addProperty("key","contact_uri");
-            extrasJson.addProperty("value",dcatMetadata.getContactPoint());
-            extrasJsonArray.add(extrasJson);
-            extrasJson=new JsonObject();
-            extrasJson.addProperty("key","contact_name");
-            extrasJson.addProperty("value",dcatMetadata.getContactName());
-            extrasJsonArray.add(extrasJson);
-            extrasJson=new JsonObject();
-            extrasJson.addProperty("key","contact_email");
-            extrasJson.addProperty("value",dcatMetadata.getContactEmail());
-            extrasJsonArray.add(extrasJson);
-            extrasJson=new JsonObject();
-            extrasJson.addProperty("key","spatial_uri");
-            extrasJson.addProperty("value",dcatMetadata.getSpatialUri());
-            extrasJsonArray.add(extrasJson);
-            extrasJson=new JsonObject();
-            extrasJson.addProperty("key","spatial");
-            extrasJson.addProperty("value",dcatMetadata.getSpatialCoverage());
-            extrasJsonArray.add(extrasJson);
-            extrasJson=new JsonObject();
-            extrasJson.addProperty("key","temporal_start");
-            extrasJson.addProperty("value",dcatMetadata.getTemporalStart());
-            extrasJsonArray.add(extrasJson);
-            extrasJson=new JsonObject();
-            extrasJson.addProperty("key","temporal_end");
-            extrasJson.addProperty("value",dcatMetadata.getTemporalEnd());
-            extrasJsonArray.add(extrasJson);
-            extrasJson=new JsonObject();
-            extrasJson.addProperty("key","theme");
-            extrasJson.addProperty("value",dcatMetadata.getThemes());
-            extrasJsonArray.add(extrasJson);
-            extrasJson=new JsonObject();
-            extrasJson.addProperty("key","access_rights");
-            extrasJson.addProperty("value",dcatMetadata.getDatasetRights());
-            extrasJsonArray.add(extrasJson);
-
-
-            //espacio para tags
-            keywords=dcatMetadata.getKeywords();
-            for (String tag: keywords){
-                tags=new JsonObject();
-                //tags.addProperty("vocabulary_id","null");
-                tags.addProperty("name",tag);
-                tagsJsonArray.add(tags);
-            }
-            //extrasJsonArray.add(extrasJson);}
-            dataJson.add("extras",extrasJsonArray);
-            dataJson.add("tags",tagsJsonArray);
+        //espacio para tags
+        keywords=dcatMetadata.getKeywords();
+        for (String tag: keywords){
+            tags=new JsonObject();
+            //tags.addProperty("vocabulary_id","null");
+            tags.addProperty("name",tag);
+            tagsJsonArray.add(tags);
         }
+        //extrasJsonArray.add(extrasJson);}
+        dataJson.add("extras",extrasJsonArray);
+        dataJson.add("tags",tagsJsonArray);
         logger.debug("dataJson: {}",dataJson);
         // create the CKAN request URL
         String urlPath = "/api/3/action/package_create";
@@ -495,14 +490,14 @@ public class CKANBackend extends HttpBackend {
      * conventions are violated.
      * @return Package name
      */
-    public String buildPkgName(String pkgTitle, DCATMetadata dcatMetadata) throws Exception {
+    public String buildPkgName(DCATMetadata dcatMetadata) throws Exception {
         String pkgName;
         String finalPackageName;
 
-        if (dcatMetadata != null && dcatMetadata.getPackageName() != null) {
+        if (dcatMetadata.getPackageName() != null) {
             finalPackageName = dcatMetadata.getPackageName().toLowerCase(Locale.ENGLISH);
         } else {
-            finalPackageName = pkgTitle.toLowerCase(Locale.ENGLISH);
+            throw new Exception("No package name found in the metadata!");
         }
 
         pkgName = NGSICharsets.encodeCKAN(finalPackageName);
@@ -528,8 +523,7 @@ public class CKANBackend extends HttpBackend {
         if (dcatMetadata != null && dcatMetadata.getResourceName() != null) {
             resName = dcatMetadata.getResourceName();
         } else {
-            String entityTitle = ngsiUtils.getSpecificAttributeValue(entity, "title");
-            resName = entityTitle != null ? entityTitle : entity.getEntityId();
+            resName = entity.getEntityId();
         }
 
         if (resName.length() > NGSIConstants.CKAN_MAX_NAME_LEN) {

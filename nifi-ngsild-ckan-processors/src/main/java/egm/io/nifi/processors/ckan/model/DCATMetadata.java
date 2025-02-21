@@ -283,6 +283,8 @@ public class DCATMetadata {
         return resourceName;
     }
 
+    public void setResourceName(String resourceName) {this.resourceName = resourceName;}
+
     public String getResourceRights() {
         return resourceRights;
     }
