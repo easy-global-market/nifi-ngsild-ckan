@@ -139,16 +139,14 @@ public class NGSIUtils {
             attributes.add(attribute);
     }
 
-    public String getSpecificAttributeValue(Entity entity, String attributeName) {
+    public static String getSpecificAttributeValue(Entity entity, String attributeName) {
         ArrayList<AttributesLD> entityAttributes = entity.getEntityAttrsLD();
-        for(AttributesLD attr : entityAttributes) {
-            if(attr.getAttrName().toLowerCase().equals(attributeName.toLowerCase())) {
-                return  attr.getAttrValue();
-            }
+        for (AttributesLD attr : entityAttributes) {
+            if (attr.getAttrName().equalsIgnoreCase(attributeName))
+                return attr.getAttrValue();
         }
-        logger.info("Did not find attribute " + attributeName + " in entity " + entity.getEntityId());
+        logger.info("Did not find attribute {} in entity {}", attributeName, entity.getEntityId());
 
         return null;
-
     }
 }

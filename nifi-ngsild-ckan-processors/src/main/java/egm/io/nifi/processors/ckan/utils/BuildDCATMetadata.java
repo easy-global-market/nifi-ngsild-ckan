@@ -1,6 +1,8 @@
 package egm.io.nifi.processors.ckan.utils;
 
 import egm.io.nifi.processors.ckan.model.DCATMetadata;
+import egm.io.nifi.processors.ckan.ngsild.Entity;
+import egm.io.nifi.processors.ckan.ngsild.NGSIUtils;
 import org.apache.commons.collections.map.CaseInsensitiveMap;
 import org.apache.nifi.flowfile.FlowFile;
 import org.apache.nifi.processor.ProcessSession;
@@ -19,13 +21,13 @@ public class BuildDCATMetadata {
         // Create the PreparedStatement to use for this FlowFile.
         Map<String, String> flowFileAttributes = flowFile.getAttributes();
         Map<String, String> newFlowFileAttributes = new CaseInsensitiveMap(flowFileAttributes);
-        String [] keywords = newFlowFileAttributes.get("keywords").replace("[", "").replace("]","").replaceAll("\"","").split(",");
+        String [] keywords = newFlowFileAttributes.get("keyword").replace("[", "").replace("]","").replaceAll("\"","").split(",");
 
         return new DCATMetadata(
                 newFlowFileAttributes.get("organizationName"),
                 newFlowFileAttributes.get("organizationType"),
                 newFlowFileAttributes.get("packageDescription"),
-                newFlowFileAttributes.get("packageName"),
+                newFlowFileAttributes.get("datasetTitle"),
                 newFlowFileAttributes.get("contactPoint"),
                 newFlowFileAttributes.get("contactName"),
                 newFlowFileAttributes.get("contactEmail"),
@@ -40,17 +42,30 @@ public class BuildDCATMetadata {
                 newFlowFileAttributes.get("landingPage"),
                 newFlowFileAttributes.get("visibility"),
                 newFlowFileAttributes.get("datasetRights"),
-                newFlowFileAttributes.get("accessURL"),
-                newFlowFileAttributes.get("availability"),
-                newFlowFileAttributes.get("resourceDescription"),
+                null,
+                null,
+                null,
                 JSON_LD_FORMAT,
-                newFlowFileAttributes.get("mimeType"),
-                newFlowFileAttributes.get("license"),
-                newFlowFileAttributes.get("licenseType"),
-                newFlowFileAttributes.get("downloadURL"),
-                newFlowFileAttributes.get("byteSize"),
-                newFlowFileAttributes.get("resourceName"),
-                newFlowFileAttributes.get("resourceRights")
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
         );
+    }
+
+    public void addMetadataFromEntity(Entity entity, DCATMetadata dcatMetadata) {
+        dcatMetadata.setAccessURL(NGSIUtils.getSpecificAttributeValue(entity, "accessURL"));
+        dcatMetadata.setAvailability(NGSIUtils.getSpecificAttributeValue(entity, "availability"));
+        dcatMetadata.setMimeType(NGSIUtils.getSpecificAttributeValue(entity, "mediaType"));
+        dcatMetadata.setLicense(NGSIUtils.getSpecificAttributeValue(entity, "license"));
+        dcatMetadata.setDownloadURL(NGSIUtils.getSpecificAttributeValue(entity, "downloadURL"));
+        dcatMetadata.setByteSize(NGSIUtils.getSpecificAttributeValue(entity, "byteSize"));
+        dcatMetadata.setResourceRights(NGSIUtils.getSpecificAttributeValue(entity, "rights"));
+        dcatMetadata.setResourceDescription(NGSIUtils.getSpecificAttributeValue(entity, "description"));
+        dcatMetadata.setResourceName(NGSIUtils.getSpecificAttributeValue(entity, "title"));
+        dcatMetadata.setLicenseType(NGSIUtils.getSpecificAttributeValue(entity, "licenseType"));
     }
 }
