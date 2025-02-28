@@ -141,40 +141,48 @@ attribute and used as the name of the organization owning the resource.
 
 ## Metadata
 
-Metadata treated by the processor and added in the CKAN server can be mapped to DCAT metadata. The following tables provide a list of metadata the processor extracts 
-as flowfile attributes and its equivalent in `dcat:Dataset` and `dcat:Distribution`.
+Metadata treated by the processor and added in the CKAN server can be mapped to DCAT metadata. 
 
 
-| CKAN Metadata for datasets | Equivalent in `dcat:Dataset` | flowfile attribute name in `NgsiLdToCkan` processor |         
-|----------------------------|------------------------------|-----------------------------------------------------|
-| notes                      | description                  | packageDescription                                  |
-| version                    | version                      | version                                             |
-| url                        | landingPage                  | landingPage                                         |
-| visibility                 | -                            | visibility                                          |
-| Publisher_type             | isPublishedBy                | organizationType                                    |
-| contact_uri                | contactPoint                 | contactPoint                                        |
-| contact_name               | -                            | contactName                                         |
-| contact_email              | -                            | contactEmail                                        |
-| spatial_uri                | -                            | spatialUri                                          |
-| spatial                    | spatial                      | spatialCoverage                                     |
-| temporal_start             | -                            | temporalStart                                       |
-| temporal_end               | -                            | temporalEnd                                         |
-| theme                      | theme                        | themes                                              |
-| access_rights              | accessRights                 | datasetRights                                       |
-| tags                       | keyword                      | keywords                                            |
+This table lists `Dataset` metadata the processor extracts as flowfile attributes and its equivalent in DCAT vocabulary.
 
 
-| CKAN Metadata for resources | Equivalent in `dcat:Distribution` | flowfile attribute name in `NgsiLdToCkan` processor |
-|-----------------------------|-----------------------------------|-----------------------------------------------------|
-| access_url                  | accessURL                         | accessURL                                           |
-| availability                | availability                      | availability                                        |
-| description                 | description                       | resourceDescription                                 |
-| mimetype                    | mediaType                         | mimeType                                            |
-| download_url                | downloadURL                       | downloadURL                                         |
-| size                        | byteSize                          | byteSize                                            |
-| rights                      | rights                            | resourceRights                                      |
-| license                     | license                           | license                                             |
-| license_type                | -                                 | licenseType                                         |
+| Metadata in CKAN server for datasets | Equivalent in DCAT vocabulary | flowfile attribute name in `NgsiLdToCkan` processor |         
+|--------------------------------------|-------------------------------|-----------------------------------------------------|
+| access_rights                        | dcterms:accessRights          | datasetRights                                       |
+| contact_email                        | -                             | contactEmail                                        |
+| contact_name                         | -                             | contactName                                         |
+| contact_uri                          | dcat:contactPoint             | contactPoint                                        |
+| notes                                | dcterms:description           | packageDescription                                  |
+| Publisher_type                       | dcterms:publisher             | organizationType                                    |
+| spatial                              | dcterms:spatial               | spatialCoverage                                     |
+| spatial_uri                          | -                             | spatialUri                                          |
+| tags                                 | dcat:keyword                  | keyword                                             |
+| temporal_start                       | dcat:startDate                | temporalStart                                       |
+| temporal_end                         | dcat:endDate                  | temporalEnd                                         |
+| title                                | dcterms:title                 | datasetTitle                                        |
+| theme                                | dcat:theme                    | themes                                              |
+| url                                  | dcat:landingPage              | landingPage                                         |
+| version                              | -                             | version                                             |
+| visibility                           | -                             | visibility                                          |
+
+
+
+This table lists `Distribution` metadata the processor extracts from the input data and its equivalent in DCAT vocabulary.
+
+
+
+| CKAN Metadata for resources | Equivalent in DCAT vocabulary | attribute name in `Distribution` entity |
+|-----------------------------|-------------------------------|-----------------------------------------|
+| access_url                  | dcat:accessURL                | accessURL                               |
+| availability                | -                             | availability                            |
+| description                 | dcterms:description           | description                             |
+| download_url                | dcat:downloadURL              | downloadURL                             |
+| license                     | dcterms:license               | license                                 |
+| license_type                | -                             | licenseType                             |
+| mimetype                    | dcat:mediaType                | mediaType                               |
+| rights                      | dcterms:rights                | rights                                  |
+| size                        | dcat:byteSize                 | byteSize                                |
 
 
 ## Template
@@ -189,6 +197,7 @@ A basic NiFi template with the `NgsiLdToCkan` processor can be found [here](CKAN
 * There's no description for datasets.
 * Not all DCAT metadata available in a dataset is utilized (for example `publisher` metadata which can be used when creating an organization)
 * Metadata and dataset title must be added as flowfile attributes instead of being extracted inside the processor (this can be avoided with the use of NGSI-LD Linked Entity Retrieval).
+* The processor does not implement unit testing.
 
 ## Roadmap & Issues
 
