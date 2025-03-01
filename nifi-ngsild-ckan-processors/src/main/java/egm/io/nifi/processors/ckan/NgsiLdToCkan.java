@@ -14,7 +14,6 @@ import org.apache.nifi.annotation.documentation.Tags;
 import org.apache.nifi.annotation.lifecycle.OnScheduled;
 import org.apache.nifi.components.PropertyDescriptor;
 import org.apache.nifi.flowfile.FlowFile;
-import org.apache.nifi.logging.ComponentLog;
 import org.apache.nifi.processor.*;
 import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.util.StandardValidators;
@@ -32,22 +31,13 @@ import java.util.concurrent.atomic.AtomicReference;
 @CapabilityDescription("Create a CKAN resource, package and dataset if not exists using the information coming from an NGSI-LD event converted to flow file." +
         "After insert all of the values of the flow file content extraction the entities and attributes")
 public class NgsiLdToCkan extends AbstractProcessor {
-    protected static final PropertyDescriptor CKAN_HOST = new PropertyDescriptor.Builder()
-            .name("CKAN Host")
-            .displayName("CKAN Host")
-            .description("FQDN/IP address where the CKAN server runs. Default value is localhost")
+    protected static final PropertyDescriptor CKAN_URL = new PropertyDescriptor.Builder()
+            .name("CKAN URL")
+            .displayName("CKAN URL")
+            .description("URL where the CKAN server runs. Default value is http://localhost")
             .required(true)
-            .defaultValue("localhost")
+            .defaultValue("http://localhost")
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
-            .build();
-
-    protected static final PropertyDescriptor CKAN_PORT = new PropertyDescriptor.Builder()
-            .name("CKAN Port")
-            .displayName("CKAN Port")
-            .description("Port where the CKAN server runs. Default value is 80")
-            .required(true)
-            .defaultValue("80")
-            .addValidator(StandardValidators.POSITIVE_INTEGER_VALIDATOR)
             .build();
 
     protected static final PropertyDescriptor CKAN_VIEWER = new PropertyDescriptor.Builder()
@@ -63,21 +53,10 @@ public class NgsiLdToCkan extends AbstractProcessor {
     protected static final PropertyDescriptor CKAN_API_KEY = new PropertyDescriptor.Builder()
             .name("CKAN API Key")
             .displayName("CKAN API Key")
-            .description("The APi Key you are going o use in CKAN")
+            .description("The API Key you are going to authenticate in CKAN")
             .required(true)
-            .defaultValue("XXXXXX")
             .sensitive(true)
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
-            .build();
-
-    protected static final PropertyDescriptor SSL = new PropertyDescriptor.Builder()
-            .name("SSL")
-            .displayName("SSL")
-            .description("ssl for connection")
-            .required(false)
-            .defaultValue("false")
-            .allowableValues("false", "true")
-            .addValidator(StandardValidators.BOOLEAN_VALIDATOR)
             .build();
 
     protected static final PropertyDescriptor CREATE_DATASTORE= new PropertyDescriptor.Builder()
@@ -115,11 +94,9 @@ public class NgsiLdToCkan extends AbstractProcessor {
     @Override
     protected List<PropertyDescriptor> getSupportedPropertyDescriptors() {
         final List<PropertyDescriptor> properties = new ArrayList<>();
-        properties.add(CKAN_HOST);
-        properties.add(CKAN_PORT);
+        properties.add(CKAN_URL);
         properties.add(CKAN_VIEWER);
         properties.add(CKAN_API_KEY);
-        properties.add(SSL);
         properties.add(CREATE_DATASTORE);
         properties.add(BATCH_SIZE);
         properties.add(RollbackOnFailure.ROLLBACK_ON_FAILURE);
@@ -137,15 +114,12 @@ public class NgsiLdToCkan extends AbstractProcessor {
 
     @OnScheduled
     public void setUpCKANBackend(final ProcessContext context) {
-        final String[] host = {context.getProperty(CKAN_HOST).getValue()};
-        final String port = context.getProperty(CKAN_PORT).getValue();
+        final String url = context.getProperty(CKAN_URL).getValue();
         final String apiKey = context.getProperty(CKAN_API_KEY).getValue();
         final String ckanViewer = context.getProperty(CKAN_VIEWER).getValue();
-        final boolean ssl = context.getProperty(SSL).asBoolean();
-        CKANBackend ckanBackend = new CKANBackend(apiKey, host, port, ssl, ckanViewer);
+        CKANBackend ckanBackend = new CKANBackend(url, apiKey, ckanViewer);
         ckanBackendAtomicReference.set(ckanBackend);
-        getLogger().info("CKAN backend initialized with host: {}, port: {}, ssl: {}", host[0], port, ssl);
-
+        getLogger().info("CKAN backend initialized with URL: {}", url);
     }
 
     protected void persistFlowFile(final ProcessContext context, final FlowFile flowFile, ProcessSession session, CKANBackend ckanBackend) throws Exception {
@@ -202,15 +176,13 @@ public class NgsiLdToCkan extends AbstractProcessor {
             return;
         }
 
-        final ComponentLog logger = getLogger();
-
         try {
             persistFlowFile(context, flowFile, session, ckanBackend);
-            logger.info("inserted {} into CKAN", flowFile);
+            getLogger().info("inserted {} into CKAN", flowFile);
             session.getProvenanceReporter().send(flowFile, "report");
             session.transfer(flowFile, REL_SUCCESS);
         } catch (Exception e) {
-            logger.error("Failed to insert {} into CKAN due to {}", new Object[] {flowFile, e}, e);
+            getLogger().error("Failed to insert {} into CKAN due to {}", new Object[] {flowFile, e}, e);
             session.putAttribute(flowFile, "ckan.error.details", e.getMessage());
             session.transfer(flowFile, REL_FAILURE);
             context.yield();

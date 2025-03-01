@@ -1,53 +1,24 @@
 package egm.io.nifi.processors.ckan.http;
 
-import org.apache.http.Header;
 import org.json.simple.JSONObject;
 
-public class JsonResponse {
-
-
-    private final JSONObject jsonObject;
-    private final int statusCode;
-    private final String reasonPhrase;
-    private final Header locationHeader;
-
-    public JsonResponse(JSONObject jsonObject, int statusCode, String reasonPhrase, Header locationHeader) {
-        this.jsonObject = jsonObject;
-        this.statusCode = statusCode;
-        this.reasonPhrase = reasonPhrase;
-        this.locationHeader = locationHeader;
-    } // JsonResponse
-
-    /**
-     * Gets the Json object.
-     * @return jsonObject
-     */
-    public JSONObject getJsonObject() {
+public record JsonResponse(
+    JSONObject jsonObject,
+    int statusCode,
+    String locationHeader
+) {
+    @Override
+    public JSONObject jsonObject() {
         return jsonObject;
     } // getJsonObject
 
-    /**
-     * Gets the status code.
-     * @return statusCode
-     */
-    public int getStatusCode() {
+    @Override
+    public int statusCode() {
         return statusCode;
     } // getStatusCode
 
-    /**
-     * Gets the reason phrase.
-     * @return reasonPhrase
-     */
-    public String getReasonPhrase() {
-        return reasonPhrase;
-    } // getReasonPhrase
-
-    /**
-     * Gets the location header.
-     * @return locationHeader
-     */
-    public Header getLocationHeader() {
+    @Override
+    public String locationHeader() {
         return locationHeader;
-    } // getLocationHeader
-
+    }
 }

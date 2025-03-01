@@ -1,8 +1,7 @@
 
 package egm.io.nifi.processors.ckan.utils;
 
-import org.apache.http.Header;
-import org.apache.http.message.BasicHeader;
+import okhttp3.Headers;
 import egm.io.nifi.processors.ckan.http.HttpBackend;
 import egm.io.nifi.processors.ckan.http.JsonResponse;
 import org.json.simple.JSONArray;
@@ -27,8 +26,8 @@ public class CKANCache extends HttpBackend {
     private final HashMap<String, String> resMap; // this cache contains the translation from resource name to identifier
     private static final Logger logger = LoggerFactory.getLogger(CKANCache.class);
 
-    public CKANCache(String[] host, String port, boolean ssl, String apiKey) {
-        super(host, port, ssl);
+    public CKANCache(String url, String apiKey) {
+        super(url);
         this.apiKey = apiKey;
         tree = new HashMap<>();
         orgMap = new HashMap<>();
@@ -118,14 +117,13 @@ public class CKANCache extends HttpBackend {
         // query CKAN for the organization information
         String ckanURL = "/api/3/action/organization_autocomplete?q=" + orgName;
 
-        ArrayList<Header> headers = new ArrayList<>();
-        headers.add(new BasicHeader("Authorization", apiKey));
-        JsonResponse res = doRequest("GET", ckanURL, true, headers, null);
+        Headers headers = new Headers.Builder().add("Authorization", apiKey).build();
+        JsonResponse res = doRequest("GET", ckanURL, headers, null);
 
-        switch (res.getStatusCode()) {
+        switch (res.statusCode()) {
             case 200:
                 // the organization exists in CKAN
-                JSONArray result = (JSONArray) res.getJsonObject().get("result");
+                JSONArray result = (JSONArray) res.jsonObject().get("result");
                 JSONObject organization = (JSONObject) result.get(0);
                 
                 // put the organization in the tree and in the organization map
@@ -138,7 +136,7 @@ public class CKANCache extends HttpBackend {
                 return false;
             default:
                 throw new Exception("Could not check if the organization exists ("
-                        + "orgName=" + orgName + ", statusCode=" + res.getStatusCode() + ", response=" + res.getJsonObject().toString() + ")");
+                        + "orgName=" + orgName + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject().toString() + ")");
         } // switch
     } // isCachedOrg
     
@@ -160,14 +158,13 @@ public class CKANCache extends HttpBackend {
 
         // query CKAN for the package information
         String ckanURL = "/api/3/action/package_show?id=" + pkgName;
-        ArrayList<Header> headers = new ArrayList<>();
-        headers.add(new BasicHeader("Authorization", apiKey));
-        JsonResponse res = doRequest("GET", ckanURL, true, headers, null);
+        Headers headers = new Headers.Builder().add("Authorization", apiKey).build();
+        JsonResponse res = doRequest("GET", ckanURL, headers, null);
 
-        switch (res.getStatusCode()) {
+        switch (res.statusCode()) {
             case 200:
                 // the package exists in CKAN
-                JSONObject result = (JSONObject) res.getJsonObject().get("result");
+                JSONObject result = (JSONObject) res.jsonObject().get("result");
                 
                 // check if the package is in "deleted" state
                 String pkgState = result.get("state").toString();
@@ -192,7 +189,7 @@ public class CKANCache extends HttpBackend {
                 return false;
             default:
                 throw new Exception("Could not check if the package exists ("
-                        + "orgName=" + orgName + ", pkgName=" + pkgName + ", statusCode=" + res.getStatusCode() + ", response=" + res.getJsonObject().toString() + ")");
+                        + "orgName=" + orgName + ", pkgName=" + pkgName + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject().toString() + ")");
         } // switch
     } // isCachedPkg
     
@@ -221,11 +218,10 @@ public class CKANCache extends HttpBackend {
         // query CKAN for the organization information
         
         String ckanURL = "/api/3/action/package_show?id=" + pkgName;
-        ArrayList<Header> headers = new ArrayList<>();
-        headers.add(new BasicHeader("Authorization", apiKey));
-        JsonResponse res = doRequest("GET", ckanURL, true, headers, null);
+        Headers headers = new Headers.Builder().add("Authorization", apiKey).build();
+        JsonResponse res = doRequest("GET", ckanURL, headers, null);
 
-        switch (res.getStatusCode()) {
+        switch (res.statusCode()) {
             case 200:
                 // the package exists in CKAN
                 logger.info("Package found in CKAN, going to update the cached resources (orgName=\"{}\", pkgName=\"{}\")", orgName, pkgName);
@@ -235,7 +231,7 @@ public class CKANCache extends HttpBackend {
                 // there is no need to put the package in the tree nor put it in the package map...
                 
                 // get the resource and populate the resource map
-                JSONObject result = (JSONObject) res.getJsonObject().get("result");
+                JSONObject result = (JSONObject) res.jsonObject().get("result");
                 JSONArray resources = (JSONArray) result.get("resources");
                 
                 if (resources.isEmpty()) {
@@ -260,7 +256,7 @@ public class CKANCache extends HttpBackend {
             default:
                 throw new Exception("Could not check if the resource exists ("
                         + "orgName=" + orgName + ", pkgName=" + pkgName + ", resName=" + resName
-                        + ", statusCode=" + res.getStatusCode() + ", response=" + res.getJsonObject().toString() + ")");
+                        + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject().toString() + ")");
         } // switch
     } // isCachedRes
 
