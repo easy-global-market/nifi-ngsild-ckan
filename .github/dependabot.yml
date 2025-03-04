@@ -6,4 +6,8 @@ updates:
       interval: "weekly"
     assignees:
       - "bobeal"
-    target-branch: "main"
+    target-branch: "develop"
+    groups:
+      nifi:
+        patterns:
+          - "org.apache.nifi*"
