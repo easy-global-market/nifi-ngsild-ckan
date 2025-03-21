@@ -18,7 +18,7 @@ import static egm.io.nifi.processors.ckan.ngsild.NGSIConstants.*;
 public class NGSIUtils {
 
     public static List<String> IGNORED_KEYS_ON_ATTRIBUTES =
-            List.of(NGSILD_TYPE, NGSILD_VALUE, NGSILD_OBJECT, NGSILD_CREATED_AT, NGSILD_MODIFIED_AT);
+            List.of(NGSILD_TYPE, NGSILD_VALUE, NGSILD_OBJECT, NGSILD_JSON, NGSILD_CREATED_AT, NGSILD_MODIFIED_AT);
     private static final Logger logger = LoggerFactory.getLogger(NGSIUtils.class);
 
     public NGSIEvent getEventFromFlowFile(FlowFile flowFile, final ProcessSession session) {
