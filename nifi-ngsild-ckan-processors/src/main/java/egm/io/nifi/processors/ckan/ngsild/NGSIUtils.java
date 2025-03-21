@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static egm.io.nifi.processors.ckan.ngsild.NGSIConstants.*;
 
@@ -39,7 +40,7 @@ public class NGSIUtils {
         for (int i = 0; i < data.length(); i++) {
             JSONObject lData = data.getJSONObject(i);
             entityId = lData.getString(NGSILD_ID);
-            entityType = lData.getString(NGSILD_TYPE);
+            entityType = parseEntityTypes(lData);
             ArrayList<AttributesLD> attributes  = new ArrayList<>();
             Iterator<String> keys = lData.keys();
             String attrType;
@@ -112,6 +113,18 @@ public class NGSIUtils {
         }
         event = new NGSIEvent(creationTime, entities);
         return event;
+    }
+
+    private String parseEntityTypes(JSONObject temporalEntity) {
+        if (temporalEntity.get("type") instanceof JSONArray) {
+            return temporalEntity.getJSONArray("type")
+                    .toList()
+                    .stream().map(type -> (String) type)
+                    .sorted()
+                    .collect(Collectors.joining("_"));
+        } else {
+            return temporalEntity.getString("type");
+        }
     }
 
     private AttributesLD parseNgsiLdSubAttribute(String key, JSONObject value) {
