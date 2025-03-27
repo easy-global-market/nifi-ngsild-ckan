@@ -217,8 +217,6 @@ public class CKANBackend extends HttpBackend {
         dataJson.addProperty("url",dcatMetadata.getLandingPage());
         dataJson.addProperty("visibility",dcatMetadata.getVisibility());
 
-        extrasJson.addProperty("key","publisher_type");
-        extrasJson.addProperty("value",dcatMetadata.getOrganizationType());
         extrasJsonArray.add(extrasJson);
         extrasJson=new JsonObject();
         extrasJson.addProperty("key","contact_uri");
@@ -454,17 +452,17 @@ public class CKANBackend extends HttpBackend {
     }
 
     /**
-     * Builds an organization name given an organizationName. It throws an exception if the naming conventions are violated.
+     * Builds an organization name given metadata. It throws an exception if the naming conventions are violated.
      * @return Organization name
      */
-    public String buildOrgName(String organizationName, DCATMetadata dcatMetadata) throws Exception {
+    public String buildOrgName(DCATMetadata dcatMetadata) throws Exception {
         String orgName;
         String finalOrganizationName;
 
-        if (dcatMetadata != null && dcatMetadata.getOrganizationName() != null) {
-            finalOrganizationName = dcatMetadata.getOrganizationName().toLowerCase(Locale.ENGLISH);
+        if (dcatMetadata.getPublisherURL() != null) {
+            finalOrganizationName = dcatMetadata.getPublisherURL().toLowerCase(Locale.ENGLISH);
         } else {
-            finalOrganizationName = organizationName.toLowerCase(Locale.ENGLISH);
+            throw new Exception("No organization name found in the metadata!");
         }
 
         orgName = NGSICharsets.encodeCKAN(finalOrganizationName);
