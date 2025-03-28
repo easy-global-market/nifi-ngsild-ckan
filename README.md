@@ -49,8 +49,8 @@ behavior is also to expose datasets and resources that comply with the [FAIR pri
 The input data must be a valid NGSI-LD notification containing the entities to be persisted in the CKAN server.
 Each entity must at least have a `title` attribute that will be used as the name of the resource. 
 
-A `publisherURL` must exist as a flowfile attribute to be used as the name of the organization responsible for making the 
-datasets and the resources available. 
+A dataset must include a `publisher` attribute, which will be used as the name of the organization responsible for making the
+datasets and the resources available.
 
 A `datasetTitle` must exist as a flowfile attribute to be used as the name of the dataset belonging to the resource.
 (future versions of the processor will automatically retrieve dataset information by using the relationship between a
@@ -149,7 +149,7 @@ This table lists `Dataset` metadata the processor extracts as flowfile attribute
 | contact_name                         | -                             | contactName                                         |
 | contact_uri                          | dcat:contactPoint             | contactPoint                                        |
 | notes                                | dcterms:description           | packageDescription                                  |
-| Publisher_type                       | dcterms:publisher             | organizationType                                    |
+| publisher                            | dcterms:publisher             | publisherURL                                        |
 | spatial                              | dcterms:spatial               | spatialCoverage                                     |
 | spatial_uri                          | -                             | spatialUri                                          |
 | tags                                 | dcat:keyword                  | keyword                                             |
