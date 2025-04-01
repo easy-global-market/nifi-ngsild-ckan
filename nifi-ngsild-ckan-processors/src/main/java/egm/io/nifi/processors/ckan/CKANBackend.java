@@ -253,7 +253,6 @@ public class CKANBackend extends HttpBackend {
         extrasJson=new JsonObject();
         extrasJson.addProperty("key","access_rights");
         extrasJson.addProperty("value",dcatMetadata.getDatasetRights());
-        extrasJson.addProperty("key","publisher");
         extrasJsonArray.add(extrasJson);
 
 
