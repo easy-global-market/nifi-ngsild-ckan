@@ -276,7 +276,7 @@ public class DCATMetadata {
     @Override
     public String toString() {
         return "DCATMetadata{" +
-                ", packageDescription='" + packageDescription + '\'' +
+                "  packageDescription='" + packageDescription + '\'' +
                 ", packageName='" + packageName + '\'' +
                 ", contactPoint='" + contactPoint + '\'' +
                 ", contactName='" + contactName + '\'' +

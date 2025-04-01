@@ -49,8 +49,9 @@ behavior is also to expose datasets and resources that comply with the [FAIR pri
 The input data must be a valid NGSI-LD notification containing the entities to be persisted in the CKAN server.
 Each entity must at least have a `title` attribute that will be used as the name of the resource. 
 
-A dataset must include a `publisher` attribute, which will be used as the name of the organization responsible for making the
-datasets and the resources available.
+A dataset must include a `publisher` attribute, which contains the id of the `Organization` entity responsible for making the
+datasets and the resources available. `NgsiLdToCkan` processor uses the `title` of the `Organization` entity as the name of the
+`Organization` to create in the CKAN server.
 
 A `datasetTitle` must exist as a flowfile attribute to be used as the name of the dataset belonging to the resource.
 (future versions of the processor will automatically retrieve dataset information by using the relationship between a
