@@ -129,7 +129,6 @@ public class NgsiLdToCkan extends AbstractProcessor {
         final DCATMetadata dcatMetadata= buildDCATMetadata.getMetadataFromFlowFile(flowFile,session);
         final NGSIEvent event=n.getEventFromFlowFile(flowFile,session);
         final long creationTime = event.getCreationTime();
-        final String organizationName = flowFile.getAttribute("X-CKAN-OrganizationName");
         CKANAggregator aggregator = new CKANAggregator() {
             @Override
             public void aggregate(Entity entity, long creationTime) {
@@ -138,7 +137,7 @@ public class NgsiLdToCkan extends AbstractProcessor {
         };
         aggregator = aggregator.getAggregator();
 
-        final String orgName = ckanBackend.buildOrgName(organizationName, dcatMetadata);
+        final String orgName = ckanBackend.buildOrgName(dcatMetadata);
         ArrayList<Entity> entities = event.getEntitiesLD();
         getLogger().info("Persisting data at NGSICKANSink: orgName=" + orgName);
         getLogger().debug("DCAT metadata: {}" , dcatMetadata);

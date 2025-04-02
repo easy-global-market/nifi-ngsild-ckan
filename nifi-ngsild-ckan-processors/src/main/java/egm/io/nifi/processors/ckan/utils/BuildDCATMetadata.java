@@ -24,8 +24,6 @@ public class BuildDCATMetadata {
         String [] keywords = newFlowFileAttributes.get("keyword").replace("[", "").replace("]","").replaceAll("\"","").split(",");
 
         return new DCATMetadata(
-                newFlowFileAttributes.get("organizationName"),
-                newFlowFileAttributes.get("organizationType"),
                 newFlowFileAttributes.get("packageDescription"),
                 newFlowFileAttributes.get("datasetTitle"),
                 newFlowFileAttributes.get("contactPoint"),

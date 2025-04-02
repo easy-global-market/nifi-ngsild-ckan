@@ -1,8 +1,6 @@
 package egm.io.nifi.processors.ckan.model;
 
 public class DCATMetadata {
-    private String organizationName;
-    private String organizationType;
     private String packageDescription;
     private String packageName;
     private String contactPoint;
@@ -31,9 +29,7 @@ public class DCATMetadata {
     private String resourceName;
     private String resourceRights;
 
-    public DCATMetadata(String organizationName, String organizationType, String packageDescription, String packageName, String contactPoint, String contactName, String contactEmail, String [] keywords, String publisherURL, String spatialUri, String spatialCoverage, String temporalStart, String temporalEnd, String themes, String version, String landingPage, String visibility, String datasetRights, String accessURL, String availability, String resourceDescription, String format, String mimeType, String license, String licenseType, String downloadURL, String byteSize, String resourceName, String resourceRights) {
-        this.organizationName = organizationName;
-        this.organizationType = organizationType;
+    public DCATMetadata(String packageDescription, String packageName, String contactPoint, String contactName, String contactEmail, String [] keywords, String publisherURL, String spatialUri, String spatialCoverage, String temporalStart, String temporalEnd, String themes, String version, String landingPage, String visibility, String datasetRights, String accessURL, String availability, String resourceDescription, String format, String mimeType, String license, String licenseType, String downloadURL, String byteSize, String resourceName, String resourceRights) {
         this.packageDescription = packageDescription;
         this.packageName = packageName;
         this.contactPoint = contactPoint;
@@ -61,22 +57,6 @@ public class DCATMetadata {
         this.byteSize = byteSize;
         this.resourceName = resourceName;
         this.resourceRights = resourceRights;
-    }
-
-    public String getOrganizationName() {
-        return organizationName;
-    }
-
-    public void setOrganizationName(String organizationName) {
-        this.organizationName = organizationName;
-    }
-
-    public String getOrganizationType() {
-        return organizationType;
-    }
-
-    public void setOrganizationType(String organizationType) {
-        this.organizationType = organizationType;
     }
 
     public String getPackageDescription() {
@@ -296,9 +276,7 @@ public class DCATMetadata {
     @Override
     public String toString() {
         return "DCATMetadata{" +
-                "organizationName='" + organizationName + '\'' +
-                ", organizationType='" + organizationType + '\'' +
-                ", packageDescription='" + packageDescription + '\'' +
+                "  packageDescription='" + packageDescription + '\'' +
                 ", packageName='" + packageName + '\'' +
                 ", contactPoint='" + contactPoint + '\'' +
                 ", contactName='" + contactName + '\'' +

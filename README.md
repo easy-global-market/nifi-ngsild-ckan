@@ -47,7 +47,12 @@ behavior is also to expose datasets and resources that comply with the [FAIR pri
 ### Input Data
 
 The input data must be a valid NGSI-LD notification containing the entities to be persisted in the CKAN server.
-Each entity must at leat have a `title` attribute that will be used as the name of the resource. 
+Each entity must at least have a `title` attribute that will be used as the name of the resource. 
+
+A dataset must include a `publisher` attribute, which is a relationship to an `Organization` entity responsible for making the
+datasets and the resources available. `NgsiLdToCkan` processor uses the `title` of the `Organization` entity as the name of the
+`Organization` to create in the CKAN server.
+
 A `datasetTitle` must exist as a flowfile attribute to be used as the name of the dataset belonging to the resource.
 (future versions of the processor will automatically retrieve dataset information by using the relationship between a
 `Distribution` entity and a `Dataset` entity).
@@ -85,7 +90,7 @@ to the dataset (e.g., ["keyword1", "keyword2", "keyword3"]).
 ### Output
 
 The `NgsiLdToCkan` processor publishes all entities of the same type in the same dataset.
-Each entity is as a resource with a default `application/ld+json` format.
+Each entity is a resource with a default `application/ld+json` format.
 
 In CKAN, names for an organization, a dataset, or a resource must only contain alphanumeric characters, `-` , or `_`.
 The length must be between 2 and 100 characters. Thus, a transformation is automatically performed by the processor. 
@@ -94,9 +99,6 @@ The length must be between 2 and 100 characters. Thus, a transformation is autom
 
 A `Subscription` must be created to trigger the notifications sent when entities are created or updated.
 
-Since there is no direct mapping between `dcat:Catalog` and an organization in CKAN, a `X-CKAN-OrganizationName` key-value pair
-must be added to the `receiverInfo` in the `Subscription`. This value will be extracted in the processor as a flowfile 
-attribute and used as the name of the organization owning the resource.
 
 ```json
 {
@@ -115,13 +117,7 @@ attribute and used as the name of the organization owning the resource.
         "format": "normalized",
         "endpoint": {
             "uri": "http://localhost:8080/ckanListener",
-            "accept": "application/json",
-            "receiverInfo": [
-                {
-                    "key": "X-CKAN-OrganizationName",
-                    "value": "Organization Name"
-                }
-            ]
+            "accept": "application/json"
         }
     }
 }
@@ -154,7 +150,7 @@ This table lists `Dataset` metadata the processor extracts as flowfile attribute
 | contact_name                         | -                             | contactName                                         |
 | contact_uri                          | dcat:contactPoint             | contactPoint                                        |
 | notes                                | dcterms:description           | packageDescription                                  |
-| Publisher_type                       | dcterms:publisher             | organizationType                                    |
+| publisher                            | dcterms:publisher             | publisherURL                                        |
 | spatial                              | dcterms:spatial               | spatialCoverage                                     |
 | spatial_uri                          | -                             | spatialUri                                          |
 | tags                                 | dcat:keyword                  | keyword                                             |
