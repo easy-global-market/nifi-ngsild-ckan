@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static egm.io.nifi.processors.ckan.ngsild.NGSIConstants.*;
 
@@ -17,7 +18,7 @@ import static egm.io.nifi.processors.ckan.ngsild.NGSIConstants.*;
 public class NGSIUtils {
 
     public static List<String> IGNORED_KEYS_ON_ATTRIBUTES =
-            List.of(NGSILD_TYPE, NGSILD_VALUE, NGSILD_OBJECT, NGSILD_CREATED_AT, NGSILD_MODIFIED_AT);
+            List.of(NGSILD_TYPE, NGSILD_VALUE, NGSILD_OBJECT, NGSILD_JSON, NGSILD_CREATED_AT, NGSILD_MODIFIED_AT);
     private static final Logger logger = LoggerFactory.getLogger(NGSIUtils.class);
 
     public NGSIEvent getEventFromFlowFile(FlowFile flowFile, final ProcessSession session) {
@@ -39,7 +40,7 @@ public class NGSIUtils {
         for (int i = 0; i < data.length(); i++) {
             JSONObject lData = data.getJSONObject(i);
             entityId = lData.getString(NGSILD_ID);
-            entityType = lData.getString(NGSILD_TYPE);
+            entityType = parseEntityTypes(lData);
             ArrayList<AttributesLD> attributes  = new ArrayList<>();
             Iterator<String> keys = lData.keys();
             String attrType;
@@ -112,6 +113,18 @@ public class NGSIUtils {
         }
         event = new NGSIEvent(creationTime, entities);
         return event;
+    }
+
+    private String parseEntityTypes(JSONObject temporalEntity) {
+        if (temporalEntity.get("type") instanceof JSONArray) {
+            return temporalEntity.getJSONArray("type")
+                    .toList()
+                    .stream().map(type -> (String) type)
+                    .sorted()
+                    .collect(Collectors.joining("_"));
+        } else {
+            return temporalEntity.getString("type");
+        }
     }
 
     private AttributesLD parseNgsiLdSubAttribute(String key, JSONObject value) {

@@ -22,6 +22,7 @@ public final class NGSIConstants {
     public static final String NGSILD_TYPE                    = "type";
     public static final String NGSILD_VALUE                   = "value";
     public static final String NGSILD_OBJECT                  = "object";
+    public static final String NGSILD_JSON                    = "json";
     public static final String NGSILD_UNIT_CODE               = "unitCode";
     public static final String NGSILD_CONTEXT                 = "@context";
     public static final String NGSILD_PROPERTY                = "Property";
