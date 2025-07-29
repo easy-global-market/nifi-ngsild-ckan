@@ -30,8 +30,6 @@
     <properties>
         <maven.compiler.target>21</maven.compiler.target>
         <maven.compiler.source>21</maven.compiler.source>
-        <!-- Skip enforcer as org.json is banned by NiFi but used in this processor -->
-        <enforcer.skip>true</enforcer.skip>
     </properties>
 
     <modules>
