@@ -120,24 +120,28 @@ public class CKANCache extends HttpBackend {
         Headers headers = new Headers.Builder().add("Authorization", apiKey).build();
         JsonResponse res = doRequest("GET", ckanURL, headers, null);
 
-        switch (res.statusCode()) {
-            case 200:
-                // the organization exists in CKAN
-                JSONArray result = (JSONArray) res.jsonObject().get("result");
-                JSONObject organization = (JSONObject) result.get(0);
-                
-                // put the organization in the tree and in the organization map
-                String orgId = organization.get("id").toString();
-                tree.put(orgName, new HashMap<>());
-                orgMap.put(orgName, orgId);
-                logger.info("Organization found in CKAN, now cached (orgName/orgId=\"{}/{}\")", orgName, orgId);
-                return true;
-            case 404:
-                return false;
-            default:
-                throw new Exception("Could not check if the organization exists ("
-                        + "orgName=" + orgName + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject().toString() + ")");
-        } // switch
+        if (res.statusCode() != 200) {
+            throw new Exception("Could not check if the organization exists ("
+                    + "orgName=" + orgName + ", statusCode=" + res.statusCode() + ", response="
+                    + res.jsonObject().toString() + ")");
+        }
+
+        JSONArray result = (JSONArray) res.jsonObject().get("result");
+
+        if (result.isEmpty()) {
+            logger.info("Organization '{}' not found in CKAN", orgName);
+            return false;
+        }
+
+        JSONObject organization = (JSONObject) result.get(0);
+
+        // put the organization in the tree and in the organization map
+        String orgId = organization.get("id").toString();
+        tree.put(orgName, new HashMap<>());
+        orgMap.put(orgName, orgId);
+        logger.info("Organization found in CKAN, now cached (orgName/orgId=\"{}/{}\")", orgName, orgId);
+        return true;
+
     } // isCachedOrg
     
     /**
