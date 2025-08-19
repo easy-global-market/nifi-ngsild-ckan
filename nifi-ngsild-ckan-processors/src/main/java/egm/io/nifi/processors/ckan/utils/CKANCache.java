@@ -139,7 +139,6 @@ public class CKANCache extends HttpBackend {
                 throw new Exception("Could not check if the organization exists ("
                         + "orgName=" + orgName + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject().toString() + ")");
         } // switch
-
     } // isCachedOrg
     
     /**
