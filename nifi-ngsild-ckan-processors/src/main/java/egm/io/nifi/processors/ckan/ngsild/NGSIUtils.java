@@ -18,7 +18,7 @@ import static egm.io.nifi.processors.ckan.ngsild.NGSIConstants.*;
 public class NGSIUtils {
 
     public static List<String> IGNORED_KEYS_ON_ATTRIBUTES =
-            List.of(NGSILD_TYPE, NGSILD_VALUE, NGSILD_OBJECT, NGSILD_JSON, NGSILD_CREATED_AT, NGSILD_MODIFIED_AT);
+            List.of(NGSILD_TYPE, NGSILD_VALUE, NGSILD_OBJECT, NGSILD_JSON, NGSILD_CREATED_AT, NGSILD_MODIFIED_AT, NGSILD_DATASET_ID);
     private static final Logger logger = LoggerFactory.getLogger(NGSIUtils.class);
 
     public NGSIEvent getEventFromFlowFile(FlowFile flowFile, final ProcessSession session) {
@@ -50,7 +50,6 @@ public class NGSIUtils {
                     Object object = lData.get(key);
                     if (object instanceof JSONArray) {
                         // it is a multi-attribute (see section 4.5.5 in NGSI-LD specification)
-                        // or an attribute with a temporal evolution
                         JSONArray values = lData.getJSONArray(key);
                         for (int j = 0; j < values.length(); j++) {
                             JSONObject value = values.getJSONObject(j);
@@ -104,7 +103,7 @@ public class NGSIUtils {
                 }else if (NGSILD_PROPERTY.contentEquals(subAttrType)){
                     String subAttrValue = value2.get(NGSILD_VALUE).toString();
                     subAttributes.add(new AttributesLD(keyOne,subAttrType,subAttrValue, "",false,null));
-                }else if (NGSILD_RELATIONSHIP.contentEquals(subAttrType)){
+                }else if (NGSILD_GEOPROPERTY.contentEquals(subAttrType)){
                     String subAttrValue = value2.get(NGSILD_VALUE).toString();
                     subAttributes.add(new AttributesLD(keyOne,subAttrType,subAttrValue,"",false,null));
                 } else if ("RelationshipDetails".equals(keyOne)) {
