@@ -29,6 +29,7 @@ public final class NGSIConstants {
     public static final String NGSILD_RELATIONSHIP            = "Relationship";
     public static final String NGSILD_GEOPROPERTY             = "GeoProperty";
     public static final String NGSILD_DATA                    = "data";
+    public static final String NGSILD_DATASET_ID              = "datasetId";
 
 
     // JSON-LD format
