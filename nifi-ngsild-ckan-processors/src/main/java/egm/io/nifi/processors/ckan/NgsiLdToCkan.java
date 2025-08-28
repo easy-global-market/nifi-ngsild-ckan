@@ -68,6 +68,15 @@ public class NgsiLdToCkan extends AbstractProcessor {
             .defaultValue("true")
             .build();
 
+    protected static final PropertyDescriptor DATASETID_PREFIX_TRUNCATE = new PropertyDescriptor.Builder()
+            .name("datasetid-prefix-truncate")
+            .displayName("Dataset id prefix to truncate")
+            .description("Prefix to truncate from dataset ids when generating column names for multi-attributes")
+            .required(false)
+            .defaultValue("urn:ngsi-ld:Dataset:")
+            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+            .build();
+
     protected static final PropertyDescriptor BATCH_SIZE = new PropertyDescriptor.Builder()
             .name("Batch Size")
             .description("The preferred number of FlowFiles to put to the database in a single transaction")
@@ -98,6 +107,7 @@ public class NgsiLdToCkan extends AbstractProcessor {
         properties.add(CKAN_VIEWER);
         properties.add(CKAN_API_KEY);
         properties.add(CREATE_DATASTORE);
+        properties.add(DATASETID_PREFIX_TRUNCATE);
         properties.add(BATCH_SIZE);
         properties.add(RollbackOnFailure.ROLLBACK_ON_FAILURE);
         return properties;
@@ -124,6 +134,7 @@ public class NgsiLdToCkan extends AbstractProcessor {
 
     protected void persistFlowFile(final ProcessContext context, final FlowFile flowFile, ProcessSession session, CKANBackend ckanBackend) throws Exception {
         final boolean createDataStore = context.getProperty(CREATE_DATASTORE).asBoolean();
+        final String datasetIdPrefixTruncate = context.getProperty(DATASETID_PREFIX_TRUNCATE).getValue();
         final NGSIUtils n = new NGSIUtils();
         final BuildDCATMetadata buildDCATMetadata = new BuildDCATMetadata();
         final DCATMetadata dcatMetadata= buildDCATMetadata.getMetadataFromFlowFile(flowFile,session);
@@ -131,7 +142,7 @@ public class NgsiLdToCkan extends AbstractProcessor {
         final long creationTime = event.getCreationTime();
         CKANAggregator aggregator = new CKANAggregator() {
             @Override
-            public void aggregate(Entity entity, long creationTime) {
+            public void aggregate(Entity entity, long creationTime, String datasetIdPrefixToTruncate) {
 
             }
         };
@@ -150,7 +161,7 @@ public class NgsiLdToCkan extends AbstractProcessor {
             final String pkgName = ckanBackend.buildPkgName(dcatMetadata);
             final String resName = ckanBackend.buildResName(entity, dcatMetadata);
             aggregator.initialize(entity);
-            aggregator.aggregate(entity, creationTime);
+            aggregator.aggregate(entity, creationTime, datasetIdPrefixTruncate);
             ArrayList<JsonObject> jsonObjects = CKANAggregator.linkedHashMapToJson(aggregator.getAggregationToPersist());
             String  aggregation= "";
 

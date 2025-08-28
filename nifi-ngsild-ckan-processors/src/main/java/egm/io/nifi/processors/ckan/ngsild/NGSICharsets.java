@@ -54,4 +54,11 @@ public final class NGSICharsets {
             return ENCODEPATTERNSLASH.matcher(in).replaceAll("_");
         } // if else
     } // encode
+
+    public static String truncateToSize(String in, int size) {
+        if (in.length() > size + 1)
+            return in.substring(0, size);
+        else
+            return in;
+    }
 } // NGSICharsets
