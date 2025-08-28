@@ -22,6 +22,8 @@
 `NgsiLdToCkan` is a NiFi processor that persists NGSI-LD entities within a [CKAN](https://ckan.org/) server.
 Entities are received through NGSI-LD notifications sent by a NGSI-LD Context Broker.
 
+It is part of the [WATERVERSE Project](https://watervese.eu/).
+
 ## Functionality
 
 ### CKAN Data Structures And Mapping
