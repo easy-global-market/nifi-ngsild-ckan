@@ -5,6 +5,7 @@
 
 ## Table of Contents
 - [Overview](#overview)
+   - [Project Context](#project-context)
 - [Functionality](#functionality)
    - [CKAN Data Structures And Mapping](#ckan-data-structures-and-mapping)
    - [Input Data](#input-data)
@@ -22,7 +23,15 @@
 `NgsiLdToCkan` is a NiFi processor that persists NGSI-LD entities within a [CKAN](https://ckan.org/) server.
 Entities are received through NGSI-LD notifications sent by a NGSI-LD Context Broker.
 
-It is part of the [WATERVERSE Project](https://watervese.eu/).
+### Project Context
+
+This processor is a contribution from the [WATERVERSE Project](https://watervese.eu/). 
+
+WATERVERSE is a European initiative that promotes the use of FAIR (Findable, Accessible, Interoperable, and Reusable) 
+data principles to improve water sector data management and sharing.  
+
+As part of this effort, `NgsiLdToCkan` enables publishing NGSI-LD context information to CKAN, making it more open, 
+interoperable, and reusable.
 
 ## Functionality
 
