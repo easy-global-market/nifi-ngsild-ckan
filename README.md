@@ -16,6 +16,7 @@
 - [Template](#template)
 - [Limitations](#limitations)
 - [Roadmap & Issues](#roadmap--issues)
+- [Acknowledgments](#acknowledgments)
 
 ## Overview
 
@@ -198,3 +199,13 @@ A basic NiFi template with the `NgsiLdToCkan` processor can be found [here](CKAN
 ## Roadmap & Issues
 
 To check out planned features, report bugs or suggest new features see [open issues](https://github.com/easy-global-market/nifi-ngsild-ckan/issues).
+
+## Acknowledgments
+
+This project has been funded by the [WATERVERSE project](https://waterverse.eu/) of the European Union’s Horizon Europe programme under Grant Agreement no 101070262.
+
+WATERVERSE is a project that promotes the use of FAIR (Findable, Accessible, Interoperable, and Reusable) 
+data principles to improve water sector data management and sharing.  
+
+As part of this effort, `NgsiLdToCkan` enables publishing NGSI-LD context information to CKAN, making it more open, 
+interoperable, and reusable.
