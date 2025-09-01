@@ -12,6 +12,7 @@
 - [Requirements](#requirements)
 - [Configuration](#configuration)
    - [Processor Properties](#processor-properties)
+- [Naming conventions](#Naming conventions)
 - [Metadata](#metadata)
 - [Template](#template)
 - [Limitations](#limitations)
@@ -93,9 +94,6 @@ to the dataset (e.g., ["keyword1", "keyword2", "keyword3"]).
 The `NgsiLdToCkan` processor publishes all entities of the same type in the same dataset.
 Each entity is a resource with a default `application/ld+json` format.
 
-In CKAN, names for an organization, a dataset, or a resource must only contain alphanumeric characters, `-` , or `_`.
-The length must be between 2 and 100 characters. Thus, a transformation is automatically performed by the processor. 
-
 ## Requirements
 
 A `Subscription` must be created to trigger the notifications sent when entities are created or updated.
@@ -135,6 +133,12 @@ A `Subscription` must be created to trigger the notifications sent when entities
 * `CKAN API Key` property is a token generated from the user account on the CKAN site. 
 
 * `Create DataStore` property creates the resource in the datastore when set to true.
+
+## Naming conventions
+
+Names for an organization, a dataset, or a resource must only contain alphanumeric characters, `-`, or `_`. 
+
+The length must be between 2 and 100 characters. Thus, a transformation is automatically performed by the processor.
 
 ## Metadata
 
@@ -188,11 +192,9 @@ A basic NiFi template with the `NgsiLdToCkan` processor can be found [here](CKAN
 
 ## Current limitations
 
-* The processor does not support multi-attributes instances.
 * The processor only supports attributes of type `Property`, `Relationship` and `GeoProperty`. 
 * An already existing resource can't be updated with new attributes.
 * There's no description for datasets.
-* Not all DCAT metadata available in a dataset is utilized (for example `publisher` metadata which can be used when creating an organization)
 * Metadata and dataset title must be added as flowfile attributes instead of being extracted inside the processor (this can be avoided with the use of NGSI-LD Linked Entity Retrieval).
 * The processor does not implement unit testing.
 
