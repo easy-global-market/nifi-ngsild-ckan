@@ -194,7 +194,6 @@ A basic NiFi template with the `NgsiLdToCkan` processor can be found [here](CKAN
 
 * The processor only supports attributes of type `Property`, `Relationship` and `GeoProperty`. 
 * An already existing resource can't be updated with new attributes.
-* There's no description for datasets.
 * Metadata and dataset title must be added as flowfile attributes instead of being extracted inside the processor (this can be avoided with the use of NGSI-LD Linked Entity Retrieval).
 * The processor does not implement unit testing.
 
