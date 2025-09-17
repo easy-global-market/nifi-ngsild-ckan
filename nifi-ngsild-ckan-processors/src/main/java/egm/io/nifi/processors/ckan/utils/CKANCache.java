@@ -115,24 +115,25 @@ public class CKANCache extends HttpBackend {
         logger.info("Organization not found in the cache, querying CKAN for it (orgName=\"{}\")", orgName);
         
         // query CKAN for the organization information
-        String ckanURL = "/api/3/action/organization_autocomplete?q=" + orgName;
+        String ckanURL = "/api/3/action/organization_show?id=" + orgName;
 
         Headers headers = new Headers.Builder().add("Authorization", apiKey).build();
         JsonResponse res = doRequest("GET", ckanURL, headers, null);
+        int status = res.statusCode();
 
-        switch (res.statusCode()) {
+        switch (status) {
             case 200:
                 // the organization exists in CKAN
-                JSONArray result = (JSONArray) res.jsonObject().get("result");
-                JSONObject organization = (JSONObject) result.get(0);
-                
+                JSONObject result = (JSONObject) res.jsonObject().get("result");
+
                 // put the organization in the tree and in the organization map
-                String orgId = organization.get("id").toString();
+                String orgId = result.get("id").toString();
                 tree.put(orgName, new HashMap<>());
                 orgMap.put(orgName, orgId);
                 logger.info("Organization found in CKAN, now cached (orgName/orgId=\"{}/{}\")", orgName, orgId);
                 return true;
             case 404:
+                logger.info("Organization '{}' not found in CKAN", orgName);
                 return false;
             default:
                 throw new Exception("Could not check if the organization exists ("
