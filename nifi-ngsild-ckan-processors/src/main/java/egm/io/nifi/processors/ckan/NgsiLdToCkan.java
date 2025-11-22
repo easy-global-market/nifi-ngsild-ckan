@@ -153,7 +153,7 @@ public class NgsiLdToCkan extends AbstractProcessor {
         aggregator = aggregator.getAggregator();
 
         final String orgName = ckanBackend.buildOrgName(dcatMetadata);
-        ArrayList<Entity> entities = event.getEntitiesLD();
+        ArrayList<Entity> entities = event.getEntities();
         getLogger().info("Persisting data at NGSICKANSink: orgName=" + orgName);
         getLogger().debug("DCAT metadata: {}", dcatMetadata);
 
