@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static egm.io.nifi.processors.ckan.ngsild.NGSIConstants.DCAT_PUBLISHER_URL;
+
 @SupportsBatching
 @InputRequirement(InputRequirement.Requirement.INPUT_REQUIRED)
 @Tags({"CKAN", "ckan", "Open Data", "NGSI-LD", "NGSI", "FIWARE"})
@@ -154,8 +156,10 @@ public class NgsiLdToCkan extends AbstractProcessor {
 
         for (Entity entity : entities) {
 
-            // Update DCATMetadata with Distribution entity attributes
-            DCATMetadata dcatMetadata = BuildDCATMetadata.getMetadataFromEntity(entity);
+            // Publisher URL is currently not available from dataset information
+            // Use the attribute set in the flow instead
+            final String publisherUrl = flowFile.getAttribute(DCAT_PUBLISHER_URL);
+            DCATMetadata dcatMetadata = BuildDCATMetadata.getMetadataFromEntity(entity, publisherUrl);
             getLogger().debug("DCAT metadata: {}", dcatMetadata);
 
             final String orgName = ckanBackend.buildOrgName(dcatMetadata);

@@ -29,6 +29,7 @@ public final class NGSIConstants {
 
     // DCAT specific attributes
     public static final String DCAT_SERVES_DATASET = "servesDataset";
+    public static final String DCAT_PUBLISHER_URL = "publisherURL";
 
     // JSON-LD format
     public static final String JSON_LD_FORMAT = "application/ld+json";

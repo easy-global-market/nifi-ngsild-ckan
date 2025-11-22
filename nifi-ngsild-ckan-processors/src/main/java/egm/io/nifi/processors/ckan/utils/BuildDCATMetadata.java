@@ -8,7 +8,7 @@ import static egm.io.nifi.processors.ckan.ngsild.NGSIConstants.JSON_LD_FORMAT;
 
 public class BuildDCATMetadata {
 
-    public static DCATMetadata getMetadataFromEntity(Entity entity) {
+    public static DCATMetadata getMetadataFromEntity(Entity entity, String publisherUrl) {
         DCATMetadata dcatMetadata = new DCATMetadata();
         dcatMetadata.setAccessURL(NGSIUtils.getSpecificAttributeValue(entity, "accessURL"));
         dcatMetadata.setAvailability(NGSIUtils.getSpecificAttributeValue(entity, "availability"));
@@ -34,7 +34,7 @@ public class BuildDCATMetadata {
                     .replaceAll("\"", "").split(",");
             dcatMetadata.setKeywords(keywords);
         }
-        dcatMetadata.setPublisherURL(NGSIUtils.getSpecificDatasetValue(entity, "publisherURL"));
+        dcatMetadata.setPublisherURL(publisherUrl);
         dcatMetadata.setSpatialUri(NGSIUtils.getSpecificDatasetValue(entity, "spatialUri"));
         dcatMetadata.setSpatialCoverage(NGSIUtils.getSpecificDatasetValue(entity, "spatial"));
         // TODO parse start and end dates for temporal
