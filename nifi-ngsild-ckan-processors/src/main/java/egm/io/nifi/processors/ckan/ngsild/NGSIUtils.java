@@ -100,13 +100,13 @@ public class NGSIUtils {
                 if (NGSILD_RELATIONSHIP.contentEquals(subAttrType)){
                     String subAttrValue = value2.get(NGSILD_OBJECT).toString();
                     subAttributes.add(new AttributesLD(keyOne,subAttrType,subAttrValue, "",false,null));
-                }else if (NGSILD_PROPERTY.contentEquals(subAttrType)){
+                } else if (NGSILD_PROPERTY.contentEquals(subAttrType)){
                     String subAttrValue = value2.get(NGSILD_VALUE).toString();
                     subAttributes.add(new AttributesLD(keyOne,subAttrType,subAttrValue, "",false,null));
-                }else if (NGSILD_GEOPROPERTY.contentEquals(subAttrType)){
+                } else if (NGSILD_GEOPROPERTY.contentEquals(subAttrType)){
                     String subAttrValue = value2.get(NGSILD_VALUE).toString();
                     subAttributes.add(new AttributesLD(keyOne,subAttrType,subAttrValue,"",false,null));
-                } else if ("RelationshipDetails".equals(keyOne)) {
+                } else if ("entity".equals(keyOne)) {
                     value2.remove(NGSILD_ID);
                     value2.remove(NGSILD_TYPE);
 
