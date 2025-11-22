@@ -5,6 +5,12 @@ public class Metadata {
     public String mtdType;
     public String mtdValue;
 
+    public Metadata(String mtdName, String mtdType, String mtdValue) {
+        this.mtdName = mtdName;
+        this.mtdType = mtdType;
+        this.mtdValue = mtdValue;
+    }
+
     public String getMtdName() {
         return mtdName;
     }
@@ -26,12 +32,6 @@ public class Metadata {
     }
 
     public void setMtdValue(String mtdValue) {
-        this.mtdValue = mtdValue;
-    }
-
-    public Metadata(String mtdName, String mtdType, String mtdValue) {
-        this.mtdName = mtdName;
-        this.mtdType = mtdType;
         this.mtdValue = mtdValue;
     }
 }

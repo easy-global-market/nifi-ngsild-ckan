@@ -6,25 +6,30 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import egm.io.nifi.processors.ckan.http.HttpBackend;
 import egm.io.nifi.processors.ckan.http.JsonResponse;
-import egm.io.nifi.processors.ckan.model.DataStore;
 import egm.io.nifi.processors.ckan.model.DCATMetadata;
-import egm.io.nifi.processors.ckan.ngsild.*;
+import egm.io.nifi.processors.ckan.model.DataStore;
+import egm.io.nifi.processors.ckan.ngsild.Entity;
+import egm.io.nifi.processors.ckan.ngsild.NGSICharsets;
+import egm.io.nifi.processors.ckan.ngsild.NGSIConstants;
+import egm.io.nifi.processors.ckan.ngsild.NGSIUtils;
 import egm.io.nifi.processors.ckan.utils.CKANCache;
 import okhttp3.Headers;
-import org.json.simple.JSONObject;
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Locale;
 
 public class CKANBackend extends HttpBackend {
 
+    private static final Logger logger = LoggerFactory.getLogger(CKANBackend.class);
+    final NGSIUtils ngsiUtils = new NGSIUtils();
     private final String apiKey;
     private final String viewer;
     private final CKANCache cache;
-    private static final Logger logger = LoggerFactory.getLogger(CKANBackend.class);
-    final NGSIUtils ngsiUtils = new NGSIUtils();
 
     public CKANBackend(String url, String apiKey, String ckanViewer) {
         super(url);
@@ -41,20 +46,19 @@ public class CKANBackend extends HttpBackend {
             throws Exception {
 
         logger.info("Going to lookup for the resource id, the cache may be updated during the process (orgName=\"{}\", " +
-                "pkgName=\"{}\", resName=\"{}\"" , orgName, pkgName, resName);
+                "pkgName=\"{}\", resName=\"{}\"", orgName, pkgName, resName);
 
-        String resId = resourceLookupOrCreateDynamicFields(orgName, pkgName, resName,records, dcatMetadata,createDataStore);
+        String resId = resourceLookupOrCreateDynamicFields(orgName, pkgName, resName, records, dcatMetadata, createDataStore);
         if (resId == null) {
             throw new Exception("Cannot persist the data (orgName=" + orgName + ", pkgName=" + pkgName
                     + ", resName=" + resName + ")");
         } else {
-            if (createDataStore){
+            if (createDataStore) {
 
                 logger.info("Going to persist the data (orgName=\"{}\", pkgName=\"{}\", resName/resId=\"{}/{}\")", orgName, pkgName, resName, resId);
 
                 insert(resId, records);
-            }
-            else {
+            } else {
 
                 logger.info("DataStore was not created in the resource (orgName=\"{}\", pkgName=\"{}\", resName/resId=\"{}/{}\")", orgName, pkgName, resName, resId);
 
@@ -64,16 +68,17 @@ public class CKANBackend extends HttpBackend {
 
     /**
      * Lookup or create resources used by cygnus-ngsi-ld and create the datastore with the fields available in the records parameter.
+     *
      * @param orgName The organization in which datastore the record is going to be inserted
      * @param pkgName The package name to be created or lookup to
      * @param resName The resource name to be created or lookup to
      * @param records Te records to be inserted and used to create the datastore fields
      */
-    private String resourceLookupOrCreateDynamicFields(String orgName, String pkgName, String resName, String records,DCATMetadata dcatMetadata, boolean createDataStore)
+    private String resourceLookupOrCreateDynamicFields(String orgName, String pkgName, String resName, String records, DCATMetadata dcatMetadata, boolean createDataStore)
             throws Exception {
         if (!cache.isCachedOrg(orgName)) {
             logger.info("The organization was not cached nor existed in CKAN (orgName=\"{}\")", orgName);
-            String orgId = createOrganization(orgName,dcatMetadata);
+            String orgId = createOrganization(orgName, dcatMetadata);
             cache.addOrg(orgName);
             cache.setOrgId(orgName, orgId);
             logger.info("Created new organization in CKAN (orgName=\"{}\", orgId=\"{}\")", orgName, orgId);
@@ -84,8 +89,8 @@ public class CKANBackend extends HttpBackend {
             String resId = createResource(resName, pkgId, dcatMetadata);
             cache.addRes(orgName, pkgName, resName);
             cache.setResId(orgName, pkgName, resName, resId);
-            if(createDataStore){
-                createDataStoreWithFields(resId,resName,records);
+            if (createDataStore) {
+                createDataStoreWithFields(resId, resName, records);
                 createView(resId);
             }
             return resId;
@@ -103,8 +108,8 @@ public class CKANBackend extends HttpBackend {
             String resId = createResource(resName, pkgId, dcatMetadata);
             cache.addRes(orgName, pkgName, resName);
             cache.setResId(orgName, pkgName, resName, resId);
-            if(createDataStore){
-                createDataStoreWithFields(resId,resName,records);
+            if (createDataStore) {
+                createDataStoreWithFields(resId, resName, records);
                 createView(resId);
             }
             return resId;
@@ -114,12 +119,12 @@ public class CKANBackend extends HttpBackend {
         logger.info("The package was cached (orgName=\"{}\", pkgName=\"{}\")", orgName, pkgName);
 
         if (!cache.isCachedRes(orgName, pkgName, resName)) {
-            logger.info("The resource was not cached nor existed in CKAN (orgName=\"{}\", pkgName=\"{}\", resName=\"{}\")" ,orgName, pkgName, resName);
+            logger.info("The resource was not cached nor existed in CKAN (orgName=\"{}\", pkgName=\"{}\", resName=\"{}\")", orgName, pkgName, resName);
 
             String resId = this.createResource(resName, cache.getPkgId(orgName, pkgName), dcatMetadata);
             cache.addRes(orgName, pkgName, resName);
             cache.setResId(orgName, pkgName, resName, resId);
-            if(createDataStore){
+            if (createDataStore) {
                 createDataStoreWithFields(resId, resName, records);
                 createView(resId);
             }
@@ -135,7 +140,8 @@ public class CKANBackend extends HttpBackend {
 
     /**
      * Insert records in the datastore.
-     * @param resId The resource in which datastore the record is going to be inserted
+     *
+     * @param resId   The resource in which datastore the record is going to be inserted
      * @param records Records to be inserted in Json format
      */
     private void insert(String resId, String records) throws Exception {
@@ -161,21 +167,22 @@ public class CKANBackend extends HttpBackend {
 
     /**
      * Creates an organization in CKAN.
+     *
      * @param orgName Organization to be created
      * @return The organization id
      */
     private String createOrganization(String orgName, DCATMetadata dcatMetadata) throws Exception {
         // create the CKAN request JSON
         JsonObject dataJson = new JsonObject();
-        dataJson.addProperty("name",orgName);
+        dataJson.addProperty("name", orgName);
 
-        if (dcatMetadata!=null){
-            dataJson.addProperty("title",orgName);
-            dataJson.addProperty("name",orgName);
+        if (dcatMetadata != null) {
+            dataJson.addProperty("title", orgName);
+            dataJson.addProperty("name", orgName);
 
             //dataJson.add("extras",extrasJsonArray);
         }
-        logger.debug("dataJson: {}",dataJson);
+        logger.debug("dataJson: {}", dataJson);
 
         // create the CKAN request URL
         String urlPath = "/api/3/action/organization_create";
@@ -196,8 +203,9 @@ public class CKANBackend extends HttpBackend {
 
     /**
      * Creates a dataset/package within a given organization in CKAN.
+     *
      * @param pkgName Package to be created
-     * @param orgId Organization the package belongs to
+     * @param orgId   Organization the package belongs to
      * @return A package identifier if the package was created or an exception if something went wrong
      */
     private String createPackage(String pkgName, String orgId, DCATMetadata dcatMetadata) throws Exception {
@@ -209,65 +217,65 @@ public class CKANBackend extends HttpBackend {
         JsonObject tags;
 
         JsonObject dataJson = new JsonObject();
-        dataJson.addProperty("name",pkgName);
-        dataJson.addProperty("owner_org",orgId);
+        dataJson.addProperty("name", pkgName);
+        dataJson.addProperty("owner_org", orgId);
         dataJson.addProperty("title", dcatMetadata.getPackageName());
         dataJson.addProperty("notes", dcatMetadata.getPackageDescription());
-        dataJson.addProperty("version",dcatMetadata.getVersion());
-        dataJson.addProperty("url",dcatMetadata.getLandingPage());
-        dataJson.addProperty("visibility",dcatMetadata.getVisibility());
+        dataJson.addProperty("version", dcatMetadata.getVersion());
+        dataJson.addProperty("url", dcatMetadata.getLandingPage());
+        dataJson.addProperty("visibility", dcatMetadata.getVisibility());
 
         extrasJsonArray.add(extrasJson);
-        extrasJson=new JsonObject();
-        extrasJson.addProperty("key","contact_uri");
-        extrasJson.addProperty("value",dcatMetadata.getContactPoint());
+        extrasJson = new JsonObject();
+        extrasJson.addProperty("key", "contact_uri");
+        extrasJson.addProperty("value", dcatMetadata.getContactPoint());
         extrasJsonArray.add(extrasJson);
-        extrasJson=new JsonObject();
-        extrasJson.addProperty("key","contact_name");
-        extrasJson.addProperty("value",dcatMetadata.getContactName());
+        extrasJson = new JsonObject();
+        extrasJson.addProperty("key", "contact_name");
+        extrasJson.addProperty("value", dcatMetadata.getContactName());
         extrasJsonArray.add(extrasJson);
-        extrasJson=new JsonObject();
-        extrasJson.addProperty("key","contact_email");
-        extrasJson.addProperty("value",dcatMetadata.getContactEmail());
+        extrasJson = new JsonObject();
+        extrasJson.addProperty("key", "contact_email");
+        extrasJson.addProperty("value", dcatMetadata.getContactEmail());
         extrasJsonArray.add(extrasJson);
-        extrasJson=new JsonObject();
-        extrasJson.addProperty("key","spatial_uri");
-        extrasJson.addProperty("value",dcatMetadata.getSpatialUri());
+        extrasJson = new JsonObject();
+        extrasJson.addProperty("key", "spatial_uri");
+        extrasJson.addProperty("value", dcatMetadata.getSpatialUri());
         extrasJsonArray.add(extrasJson);
-        extrasJson=new JsonObject();
-        extrasJson.addProperty("key","spatial");
-        extrasJson.addProperty("value",dcatMetadata.getSpatialCoverage());
+        extrasJson = new JsonObject();
+        extrasJson.addProperty("key", "spatial");
+        extrasJson.addProperty("value", dcatMetadata.getSpatialCoverage());
         extrasJsonArray.add(extrasJson);
-        extrasJson=new JsonObject();
-        extrasJson.addProperty("key","temporal_start");
-        extrasJson.addProperty("value",dcatMetadata.getTemporalStart());
+        extrasJson = new JsonObject();
+        extrasJson.addProperty("key", "temporal_start");
+        extrasJson.addProperty("value", dcatMetadata.getTemporalStart());
         extrasJsonArray.add(extrasJson);
-        extrasJson=new JsonObject();
-        extrasJson.addProperty("key","temporal_end");
-        extrasJson.addProperty("value",dcatMetadata.getTemporalEnd());
+        extrasJson = new JsonObject();
+        extrasJson.addProperty("key", "temporal_end");
+        extrasJson.addProperty("value", dcatMetadata.getTemporalEnd());
         extrasJsonArray.add(extrasJson);
-        extrasJson=new JsonObject();
-        extrasJson.addProperty("key","theme");
-        extrasJson.addProperty("value",dcatMetadata.getThemes());
+        extrasJson = new JsonObject();
+        extrasJson.addProperty("key", "theme");
+        extrasJson.addProperty("value", dcatMetadata.getThemes());
         extrasJsonArray.add(extrasJson);
-        extrasJson=new JsonObject();
-        extrasJson.addProperty("key","access_rights");
-        extrasJson.addProperty("value",dcatMetadata.getDatasetRights());
+        extrasJson = new JsonObject();
+        extrasJson.addProperty("key", "access_rights");
+        extrasJson.addProperty("value", dcatMetadata.getDatasetRights());
         extrasJsonArray.add(extrasJson);
 
 
         //espacio para tags
-        keywords=dcatMetadata.getKeywords();
-        for (String tag: keywords){
-            tags=new JsonObject();
+        keywords = dcatMetadata.getKeywords();
+        for (String tag : keywords) {
+            tags = new JsonObject();
             //tags.addProperty("vocabulary_id","null");
-            tags.addProperty("name",tag);
+            tags.addProperty("name", tag);
             tagsJsonArray.add(tags);
         }
         //extrasJsonArray.add(extrasJson);}
-        dataJson.add("extras",extrasJsonArray);
-        dataJson.add("tags",tagsJsonArray);
-        logger.debug("dataJson: {}",dataJson);
+        dataJson.add("extras", extrasJsonArray);
+        dataJson.add("tags", tagsJsonArray);
+        logger.debug("dataJson: {}", dataJson);
         // create the CKAN request URL
         String urlPath = "/api/3/action/package_create";
 
@@ -302,8 +310,9 @@ public class CKANBackend extends HttpBackend {
 
     /**
      * Creates a resource within a given package in CKAN.
+     *
      * @param resName Resource to be created
-     * @param pkgId Package the resource belongs to
+     * @param pkgId   Package the resource belongs to
      * @return A resource identifier if the resource was created or an exception if something went wrong
      */
     private String createResource(String resName, String pkgId, DCATMetadata dcatMetadata) throws Exception {
@@ -313,23 +322,23 @@ public class CKANBackend extends HttpBackend {
         JsonObject extrasJson = new JsonObject();
 
         JsonObject dataJson = new JsonObject();
-        dataJson.addProperty("package_id",pkgId);
-        dataJson.addProperty("name",resName);
-        dataJson.addProperty("access_url",dcatMetadata.getAccessURL());
-        dataJson.addProperty("format",dcatMetadata.getFormat());
-        dataJson.addProperty("availability",dcatMetadata.getAvailability());
-        dataJson.addProperty("description",dcatMetadata.getResourceDescription());
-        dataJson.addProperty("mimetype",dcatMetadata.getMimeType());
-        dataJson.addProperty("license",dcatMetadata.getLicense());
-        dataJson.addProperty("download_url",dcatMetadata.getDownloadURL());
-        dataJson.addProperty("size",dcatMetadata.getByteSize());
-        dataJson.addProperty("url",dcatMetadata.getDownloadURL());
-        dataJson.addProperty("rights",dcatMetadata.getResourceRights());
-        extrasJson.addProperty("key","license_type");
-        extrasJson.addProperty("value",dcatMetadata.getLicenseType());
+        dataJson.addProperty("package_id", pkgId);
+        dataJson.addProperty("name", resName);
+        dataJson.addProperty("access_url", dcatMetadata.getAccessURL());
+        dataJson.addProperty("format", dcatMetadata.getFormat());
+        dataJson.addProperty("availability", dcatMetadata.getAvailability());
+        dataJson.addProperty("description", dcatMetadata.getResourceDescription());
+        dataJson.addProperty("mimetype", dcatMetadata.getMimeType());
+        dataJson.addProperty("license", dcatMetadata.getLicense());
+        dataJson.addProperty("download_url", dcatMetadata.getDownloadURL());
+        dataJson.addProperty("size", dcatMetadata.getByteSize());
+        dataJson.addProperty("url", dcatMetadata.getDownloadURL());
+        dataJson.addProperty("rights", dcatMetadata.getResourceRights());
+        extrasJson.addProperty("key", "license_type");
+        extrasJson.addProperty("value", dcatMetadata.getLicenseType());
         //extrasJsonArray.add(extrasJson);
-        dataJson.add("extras",extrasJsonArray);
-        logger.debug("dataJson: {}",dataJson);
+        dataJson.add("extras", extrasJsonArray);
+        logger.debug("dataJson: {}", dataJson);
         // create the CKAN request URL
         String urlPath = "/api/3/action/resource_create";
 
@@ -349,7 +358,8 @@ public class CKANBackend extends HttpBackend {
 
     /**
      * Creates a datastore for a given resource in CKAN.
-     * @param resId Identifies the resource whose datastore is going to be created.
+     *
+     * @param resId   Identifies the resource whose datastore is going to be created.
      * @param records Array list with the attributes names for being used as fields with column mode
      */
     private void createDataStoreWithFields(String resId, String resName, String records) throws Exception {
@@ -399,6 +409,7 @@ public class CKANBackend extends HttpBackend {
 
     /**
      * Creates a view for a given resource in CKAN.
+     *
      * @param resId Identifies the resource whose view is going to be created.
      */
     private void createView(String resId) throws Exception {
@@ -453,6 +464,7 @@ public class CKANBackend extends HttpBackend {
 
     /**
      * Builds an organization name given metadata. It throws an exception if the naming conventions are violated.
+     *
      * @return Organization name
      */
     public String buildOrgName(DCATMetadata dcatMetadata) throws Exception {
@@ -482,6 +494,7 @@ public class CKANBackend extends HttpBackend {
     /**
      * Builds a package name given an entity and a package title. It throws an exception if the naming
      * conventions are violated.
+     *
      * @return Package name
      */
     public String buildPkgName(DCATMetadata dcatMetadata) throws Exception {
@@ -509,6 +522,7 @@ public class CKANBackend extends HttpBackend {
 
     /**
      * Builds a resource name given an entity. It throws an exception if the naming conventions are violated.
+     *
      * @return Resource name
      */
     public String buildResName(Entity entity, DCATMetadata dcatMetadata) throws Exception {

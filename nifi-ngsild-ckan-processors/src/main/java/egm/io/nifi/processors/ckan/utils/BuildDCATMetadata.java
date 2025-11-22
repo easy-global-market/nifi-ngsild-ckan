@@ -21,7 +21,7 @@ public class BuildDCATMetadata {
         // Create the PreparedStatement to use for this FlowFile.
         Map<String, String> flowFileAttributes = flowFile.getAttributes();
         Map<String, String> newFlowFileAttributes = new CaseInsensitiveMap(flowFileAttributes);
-        String [] keywords = newFlowFileAttributes.get("keyword").replace("[", "").replace("]","").replaceAll("\"","").split(",");
+        String[] keywords = newFlowFileAttributes.get("keyword").replace("[", "").replace("]", "").replaceAll("\"", "").split(",");
 
         return new DCATMetadata(
                 newFlowFileAttributes.get("packageDescription"),

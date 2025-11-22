@@ -9,9 +9,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 public class HttpBackend {
+    private static final Logger logger = LoggerFactory.getLogger(HttpBackend.class);
     private final String url;
     private final OkHttpClient httpClient;
-    private static final Logger logger = LoggerFactory.getLogger(HttpBackend.class);
 
     public HttpBackend(String url) {
         this.url = url;

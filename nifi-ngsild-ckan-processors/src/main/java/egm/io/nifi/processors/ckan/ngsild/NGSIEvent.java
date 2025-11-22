@@ -4,9 +4,9 @@ import java.util.ArrayList;
 
 public class NGSIEvent {
     public long creationTime;
-    public ArrayList <Entity> entitiesLD;
+    public ArrayList<Entity> entitiesLD;
 
-    public NGSIEvent(long creationTime, ArrayList<Entity> entitiesLD ){
+    public NGSIEvent(long creationTime, ArrayList<Entity> entitiesLD) {
         this.creationTime = creationTime;
         this.entitiesLD = entitiesLD;
     }

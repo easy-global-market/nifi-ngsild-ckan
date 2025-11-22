@@ -16,11 +16,11 @@ import java.util.LinkedHashMap;
 
 
 public abstract class CKANAggregator {
+    private static final Logger logger = LoggerFactory.getLogger(CKANAggregator.class);
     /**
      * The Aggregation of processed entityes.
      */
     protected LinkedHashMap<String, ArrayList<JsonElement>> aggregation;
-
     // string containing the data fieldValues
     protected String entityForNaming;
     protected String entityTypeForNaming;
@@ -29,194 +29,14 @@ public abstract class CKANAggregator {
     protected String orgName;
     protected String pkgName;
     protected String resName;
-    private static final Logger logger = LoggerFactory.getLogger(CKANAggregator.class);
-
-
-    /**
-     * Gets aggregation.
-     *
-     * @return the aggregation
-     */
-    public LinkedHashMap<String, ArrayList<JsonElement>> getAggregation() {
-        if (aggregation == null) {
-            return new LinkedHashMap<>();
-        } else {
-            return aggregation;
-        }
-    } //getAggregation
-
-    /**
-     * Gets aggregation to persist. This means that the returned aggregation will not have metadata
-     * in case that attrMetadataStore is set to false. Also, added fields for processing purposes
-     * will be removed from the aggregation (like attrType on Column mode).
-     *
-     * @return the aggregation to persist
-     */
-    public LinkedHashMap<String, ArrayList<JsonElement>> getAggregationToPersist() {
-        if (aggregation == null) {
-            return new LinkedHashMap<>();
-        } else {
-            return linkedHashMapWithoutDefaultFields(aggregation);
-        }
-    } //getAggregationToPersist
-
-    /**
-     * Sets aggregation.
-     *
-     * @param aggregation the aggregation
-     */
-    public void setAggregation(LinkedHashMap<String, ArrayList<JsonElement>> aggregation) {
-        this.aggregation = aggregation;
-    } //setAggregation
-
-    public void setEntityForNaming(String entityForNaming) {
-        this.entityForNaming = entityForNaming;
-    }
-
-    public void setEntityTypeForNaming(String entityTypeForNaming) {
-        this.entityTypeForNaming = entityTypeForNaming;
-    }
-    /**
-     * Gets attribute.
-     *
-     * @return the attribute
-     */
-    public String getAttribute() {
-        return attribute;
-    } //getAttribute
-
-    /**
-     * Sets attribute.
-     *
-     * @param attribute the attribute
-     */
-    public void setAttribute(String attribute) {
-        this.attribute = attribute;
-    } //setAttribute
-
-    public void setAttributeForNaming(String attributeForNaming) {
-        this.attributeForNaming = attributeForNaming;
-    }
-
-    public void setOrgName(String orgName) {
-        this.orgName = orgName;
-    }
-
-    public void setPkgName(String pkgName) {
-        this.pkgName = pkgName;
-    }
-
-    public void setResName(String resName) {
-        this.resName = resName;
-    }
-
     protected String tableName;
     protected String typedFieldNames;
     protected String fieldNames;
 
-
-    public String getOrgName() {
-        return orgName.toLowerCase();
-    }
-
-    public String getPkgName() {
-            return pkgName.toLowerCase();
-    }
-
-    public String getResName() {
-            return resName.toLowerCase();
-    }
-
-    public String getTableName() {
-            return tableName.toLowerCase();
-    } // getTableName
-
-    public String getTypedFieldNames() {
-        return typedFieldNames;
-    } // getTypedFieldNames
-
-    public String getFieldNames() {
-        return fieldNames;
-    } // getFieldNames
-
-    public void initialize(Entity entity) throws Exception {
-        entityForNaming = entity.getEntityId();
-        entityTypeForNaming=entity.getEntityType();
-    } // initialize
-
-    public abstract void aggregate(Entity entity, long creationTime, String datasetIdPrefixToTruncate);
-
-    /**
-     * Class for aggregating batches in column mode.
-     */
-    public class ColumnAggregator extends CKANAggregator {
-        @Override
-        public void initialize(Entity entity) throws Exception {
-            super.initialize(entity);
-            LinkedHashMap<String, ArrayList<JsonElement>> aggregation = getAggregation();
-
-            aggregation.put(NGSIConstants.RECV_TIME, new ArrayList<>());
-            aggregation.put(NGSIConstants.ENTITY_ID, new ArrayList<>());
-            aggregation.put(NGSIConstants.ENTITY_TYPE, new ArrayList<>());
-
-            // iterate on all this context element attributes, if there are attributes
-            ArrayList<AttributesLD> attributes = entity.getEntityAttrsLD();
-
-            if (attributes == null || attributes.isEmpty()) {
-                return;
-            } // if
-
-            // aggregate all this context element attributes and their sub-attributes
-            aggregateInitialAttributes("", attributes, aggregation);
-            setAggregation(aggregation);
-        } // initialize
-
-        @Override
-        public void aggregate(Entity entity, long creationTime, String datasetIdPrefixToTruncate) {
-            LinkedHashMap<String, ArrayList<JsonElement>> aggregation = getAggregation();
-
-            // get the getRecvTimeTs headers
-            String recvTime = CommonConstants.getHumanReadable(creationTime, true);
-
-            // get the getRecvTimeTs body
-            String entityId = entity.getEntityId();
-            String entityType = entity.getEntityType();
-
-            // iterate on all this context element attributes, if there are attributes
-            // iterate on all this context element attributes, if there are attributes
-            ArrayList<AttributesLD> attributes = entity.getEntityAttrsLD();
-
-            if (attributes == null || attributes.isEmpty()) {
-                logger.info("No attributes within the notified entity, nothing is done (id=\"{}\", type=\"{}\")", entityId, entityType);
-                return;
-            } // if
-
-            logger.info("Entity to be aggregated: {}", entity);
-            logger.info("Entity attributes: {}", attributes);
-
-            aggregation.get(NGSIConstants.RECV_TIME).add(new JsonPrimitive(recvTime));
-            aggregation.get(NGSIConstants.ENTITY_ID).add(new JsonPrimitive(entityId));
-            aggregation.get(NGSIConstants.ENTITY_TYPE).add(new JsonPrimitive(entityType));
-
-            // aggregate all this context element attributes and their sub-attributes
-            aggregateAttributeValues("", attributes, aggregation, datasetIdPrefixToTruncate);
-
-            logger.info("Aggregated data: {}", aggregation);
-
-            setAggregation(aggregation);
-
-        } // aggregate
-
-    } // ColumnAggregator
-
-    public CKANAggregator getAggregator() {
-        return new ColumnAggregator();
-    } // getAggregator
-
     /**
      * Linked hash map without default fields linked hash map.
      *
-     * @param aggregation       the aggregation
+     * @param aggregation the aggregation
      * @return the linked hash map without metadata objects (if attrMetadataStore is set to true)
      * also, removes "_type" and "RECV_TIME_TSC" keys from the object
      */
@@ -280,7 +100,121 @@ public abstract class CKANAggregator {
         return cropedLinkedHashMap;
     }
 
-    public void aggregateInitialAttributes(String attributePrefix, ArrayList<AttributesLD> attributes, LinkedHashMap<String, ArrayList<JsonElement>> aggregation ) {
+    /**
+     * Gets aggregation.
+     *
+     * @return the aggregation
+     */
+    public LinkedHashMap<String, ArrayList<JsonElement>> getAggregation() {
+        if (aggregation == null) {
+            return new LinkedHashMap<>();
+        } else {
+            return aggregation;
+        }
+    } //getAggregation
+
+    /**
+     * Sets aggregation.
+     *
+     * @param aggregation the aggregation
+     */
+    public void setAggregation(LinkedHashMap<String, ArrayList<JsonElement>> aggregation) {
+        this.aggregation = aggregation;
+    } //setAggregation
+
+    /**
+     * Gets aggregation to persist. This means that the returned aggregation will not have metadata
+     * in case that attrMetadataStore is set to false. Also, added fields for processing purposes
+     * will be removed from the aggregation (like attrType on Column mode).
+     *
+     * @return the aggregation to persist
+     */
+    public LinkedHashMap<String, ArrayList<JsonElement>> getAggregationToPersist() {
+        if (aggregation == null) {
+            return new LinkedHashMap<>();
+        } else {
+            return linkedHashMapWithoutDefaultFields(aggregation);
+        }
+    } //getAggregationToPersist
+
+    public void setEntityForNaming(String entityForNaming) {
+        this.entityForNaming = entityForNaming;
+    }
+
+    public void setEntityTypeForNaming(String entityTypeForNaming) {
+        this.entityTypeForNaming = entityTypeForNaming;
+    }
+
+    /**
+     * Gets attribute.
+     *
+     * @return the attribute
+     */
+    public String getAttribute() {
+        return attribute;
+    } //getAttribute
+
+    /**
+     * Sets attribute.
+     *
+     * @param attribute the attribute
+     */
+    public void setAttribute(String attribute) {
+        this.attribute = attribute;
+    } //setAttribute
+
+    public void setAttributeForNaming(String attributeForNaming) {
+        this.attributeForNaming = attributeForNaming;
+    }
+
+    public String getOrgName() {
+        return orgName.toLowerCase();
+    }
+
+    public void setOrgName(String orgName) {
+        this.orgName = orgName;
+    }
+
+    public String getPkgName() {
+        return pkgName.toLowerCase();
+    }
+
+    public void setPkgName(String pkgName) {
+        this.pkgName = pkgName;
+    }
+
+    public String getResName() {
+        return resName.toLowerCase();
+    }
+
+    public void setResName(String resName) {
+        this.resName = resName;
+    }
+
+    public String getTableName() {
+        return tableName.toLowerCase();
+    } // getTableName
+
+    public String getTypedFieldNames() {
+        return typedFieldNames;
+    } // getTypedFieldNames
+
+    public String getFieldNames() {
+        return fieldNames;
+    } // getFieldNames
+
+    public void initialize(Entity entity) throws Exception {
+        entityForNaming = entity.getEntityId();
+        entityTypeForNaming = entity.getEntityType();
+    } // initialize
+
+    public abstract void aggregate(Entity entity, long creationTime, String datasetIdPrefixToTruncate);
+
+    public CKANAggregator getAggregator() {
+        return new ColumnAggregator();
+    } // getAggregator
+
+    public void aggregateInitialAttributes(String attributePrefix, ArrayList<AttributesLD> attributes, LinkedHashMap<String, ArrayList<JsonElement>> aggregation) {
         for (AttributesLD attribute : attributes) {
             String attrName = (attributePrefix.isEmpty() ? attributePrefix : attributePrefix + "_") + attribute.getAttrName();
             aggregation.put(attrName, new ArrayList<>());
@@ -291,7 +225,7 @@ public abstract class CKANAggregator {
         }
     }
 
-    public void aggregateAttributeValues(String attributePrefix, ArrayList<AttributesLD> attributes, LinkedHashMap<String, ArrayList<JsonElement>> aggregation, String datasetIdPrefixToTruncate ) {
+    public void aggregateAttributeValues(String attributePrefix, ArrayList<AttributesLD> attributes, LinkedHashMap<String, ArrayList<JsonElement>> aggregation, String datasetIdPrefixToTruncate) {
         for (AttributesLD attribute : attributes) {
             String encodedAttrName = encodeAttributeName(attribute.getAttrName(), attribute.getDatasetId(), datasetIdPrefixToTruncate);
             String attrName = (attributePrefix.isEmpty() ? attributePrefix : attributePrefix + "_") + encodedAttrName;
@@ -311,11 +245,74 @@ public abstract class CKANAggregator {
         // For too long dataset ids, truncate to 32 (not perfect, nor totally bulletproof)
         String datasetIdEncodedValue =
                 (!datasetId.isEmpty() ?
-                        "_" + NGSICharsets.encodeCKAN(NGSICharsets.truncateToSize(datasetId.replaceFirst(datasetIdPrefixToTruncate, ""), 32)):
+                        "_" + NGSICharsets.encodeCKAN(NGSICharsets.truncateToSize(datasetId.replaceFirst(datasetIdPrefixToTruncate, ""), 32)) :
                         ""
                 );
         String encodedName = NGSICharsets.encodeCKAN(attributeName) + datasetIdEncodedValue;
         return encodedName.toLowerCase();
     }
+
+    /**
+     * Class for aggregating batches in column mode.
+     */
+    public class ColumnAggregator extends CKANAggregator {
+        @Override
+        public void initialize(Entity entity) throws Exception {
+            super.initialize(entity);
+            LinkedHashMap<String, ArrayList<JsonElement>> aggregation = getAggregation();
+
+            aggregation.put(NGSIConstants.RECV_TIME, new ArrayList<>());
+            aggregation.put(NGSIConstants.ENTITY_ID, new ArrayList<>());
+            aggregation.put(NGSIConstants.ENTITY_TYPE, new ArrayList<>());
+
+            // iterate on all this context element attributes, if there are attributes
+            ArrayList<AttributesLD> attributes = entity.getEntityAttrsLD();
+
+            if (attributes == null || attributes.isEmpty()) {
+                return;
+            } // if
+
+            // aggregate all this context element attributes and their sub-attributes
+            aggregateInitialAttributes("", attributes, aggregation);
+            setAggregation(aggregation);
+        } // initialize
+
+        @Override
+        public void aggregate(Entity entity, long creationTime, String datasetIdPrefixToTruncate) {
+            LinkedHashMap<String, ArrayList<JsonElement>> aggregation = getAggregation();
+
+            // get the getRecvTimeTs headers
+            String recvTime = CommonConstants.getHumanReadable(creationTime, true);
+
+            // get the getRecvTimeTs body
+            String entityId = entity.getEntityId();
+            String entityType = entity.getEntityType();
+
+            // iterate on all this context element attributes, if there are attributes
+            // iterate on all this context element attributes, if there are attributes
+            ArrayList<AttributesLD> attributes = entity.getEntityAttrsLD();
+
+            if (attributes == null || attributes.isEmpty()) {
+                logger.info("No attributes within the notified entity, nothing is done (id=\"{}\", type=\"{}\")", entityId, entityType);
+                return;
+            } // if
+
+            logger.info("Entity to be aggregated: {}", entity);
+            logger.info("Entity attributes: {}", attributes);
+
+            aggregation.get(NGSIConstants.RECV_TIME).add(new JsonPrimitive(recvTime));
+            aggregation.get(NGSIConstants.ENTITY_ID).add(new JsonPrimitive(entityId));
+            aggregation.get(NGSIConstants.ENTITY_TYPE).add(new JsonPrimitive(entityType));
+
+            // aggregate all this context element attributes and their sub-attributes
+            aggregateAttributeValues("", attributes, aggregation, datasetIdPrefixToTruncate);
+
+            logger.info("Aggregated data: {}", aggregation);
+
+            setAggregation(aggregation);
+
+        } // aggregate
+
+    } // ColumnAggregator
 
 } // CKANAggregator

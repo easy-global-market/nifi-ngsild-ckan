@@ -9,6 +9,14 @@ public class Attributes {
     public ArrayList<Metadata> attrMetadata;
     public String metadataString;
 
+    public Attributes(String attrName, String attrType, String attrValue, ArrayList<Metadata> attrMetadata, String metadataString) {
+        this.attrName = attrName;
+        this.attrType = attrType;
+        this.attrValue = attrValue;
+        this.attrMetadata = attrMetadata;
+        this.metadataString = metadataString;
+    }
+
     public String getMetadataString() {
         return metadataString;
     }
@@ -29,6 +37,10 @@ public class Attributes {
         return attrType;
     }
 
+    public void setAttrType(String attrType) {
+        this.attrType = attrType;
+    }
+
     public ArrayList<Metadata> getAttrMetadata() {
         return attrMetadata;
     }
@@ -37,23 +49,11 @@ public class Attributes {
         this.attrMetadata = attrMetadata;
     }
 
-    public void setAttrType(String attrType) {
-        this.attrType = attrType;
-    }
-
     public String getAttrValue() {
         return attrValue;
     }
 
     public void setAttrValue(String attrValue) {
         this.attrValue = attrValue;
-    }
-
-    public Attributes(String attrName, String attrType, String attrValue, ArrayList<Metadata> attrMetadata,String metadataString) {
-        this.attrName = attrName;
-        this.attrType = attrType;
-        this.attrValue = attrValue;
-        this.attrMetadata = attrMetadata;
-        this.metadataString = metadataString;
     }
 }

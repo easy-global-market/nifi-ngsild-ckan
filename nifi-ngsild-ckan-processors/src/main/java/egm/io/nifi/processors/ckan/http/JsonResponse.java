@@ -3,9 +3,9 @@ package egm.io.nifi.processors.ckan.http;
 import org.json.simple.JSONObject;
 
 public record JsonResponse(
-    JSONObject jsonObject,
-    int statusCode,
-    String locationHeader
+        JSONObject jsonObject,
+        int statusCode,
+        String locationHeader
 ) {
     @Override
     public JSONObject jsonObject() {

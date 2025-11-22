@@ -7,7 +7,7 @@ import java.util.TimeZone;
 public final class CommonConstants {
 
     // Maximum values
-    public static final int MAX_CONNS           = 500;
+    public static final int MAX_CONNS = 500;
     public static final int MAX_CONNS_PER_ROUTE = 100;
 
     /**

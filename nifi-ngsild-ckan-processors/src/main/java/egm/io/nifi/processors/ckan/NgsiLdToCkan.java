@@ -14,7 +14,10 @@ import org.apache.nifi.annotation.documentation.Tags;
 import org.apache.nifi.annotation.lifecycle.OnScheduled;
 import org.apache.nifi.components.PropertyDescriptor;
 import org.apache.nifi.flowfile.FlowFile;
-import org.apache.nifi.processor.*;
+import org.apache.nifi.processor.AbstractProcessor;
+import org.apache.nifi.processor.ProcessContext;
+import org.apache.nifi.processor.ProcessSession;
+import org.apache.nifi.processor.Relationship;
 import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.util.StandardValidators;
 import org.apache.nifi.processor.util.pattern.RollbackOnFailure;
@@ -46,7 +49,7 @@ public class NgsiLdToCkan extends AbstractProcessor {
             .description("The CKAN resource page can contain one or more visualizations of the resource data or file contents (a table, a bar chart, a map, etc). These are commonly referred to as resource views.")
             .required(true)
             .defaultValue("datatables_view")
-            .allowableValues("datatables_view", "text_view","image_view","video_view","audio_view","webpage_view")
+            .allowableValues("datatables_view", "text_view", "image_view", "video_view", "audio_view", "webpage_view")
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
 
@@ -59,7 +62,7 @@ public class NgsiLdToCkan extends AbstractProcessor {
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
 
-    protected static final PropertyDescriptor CREATE_DATASTORE= new PropertyDescriptor.Builder()
+    protected static final PropertyDescriptor CREATE_DATASTORE = new PropertyDescriptor.Builder()
             .name("create-datastore")
             .displayName("Create DataStore")
             .description("true or false, true applies create the DataStore resource")
@@ -100,6 +103,7 @@ public class NgsiLdToCkan extends AbstractProcessor {
             .build();
 
     private final AtomicReference<CKANBackend> ckanBackendAtomicReference = new AtomicReference<>();
+
     @Override
     protected List<PropertyDescriptor> getSupportedPropertyDescriptors() {
         final List<PropertyDescriptor> properties = new ArrayList<>();
@@ -137,8 +141,8 @@ public class NgsiLdToCkan extends AbstractProcessor {
         final String datasetIdPrefixTruncate = context.getProperty(DATASETID_PREFIX_TRUNCATE).getValue();
         final NGSIUtils n = new NGSIUtils();
         final BuildDCATMetadata buildDCATMetadata = new BuildDCATMetadata();
-        final DCATMetadata dcatMetadata= buildDCATMetadata.getMetadataFromFlowFile(flowFile,session);
-        final NGSIEvent event=n.getEventFromFlowFile(flowFile,session);
+        final DCATMetadata dcatMetadata = buildDCATMetadata.getMetadataFromFlowFile(flowFile, session);
+        final NGSIEvent event = n.getEventFromFlowFile(flowFile, session);
         final long creationTime = event.getCreationTime();
         CKANAggregator aggregator = new CKANAggregator() {
             @Override
@@ -151,7 +155,7 @@ public class NgsiLdToCkan extends AbstractProcessor {
         final String orgName = ckanBackend.buildOrgName(dcatMetadata);
         ArrayList<Entity> entities = event.getEntitiesLD();
         getLogger().info("Persisting data at NGSICKANSink: orgName=" + orgName);
-        getLogger().debug("DCAT metadata: {}" , dcatMetadata);
+        getLogger().debug("DCAT metadata: {}", dcatMetadata);
 
         for (Entity entity : entities) {
 
@@ -163,7 +167,7 @@ public class NgsiLdToCkan extends AbstractProcessor {
             aggregator.initialize(entity);
             aggregator.aggregate(entity, creationTime, datasetIdPrefixTruncate);
             ArrayList<JsonObject> jsonObjects = CKANAggregator.linkedHashMapToJson(aggregator.getAggregationToPersist());
-            String  aggregation= "";
+            String aggregation = "";
 
             for (JsonObject jsonObject : jsonObjects) {
                 if (aggregation.isEmpty()) {
@@ -195,7 +199,7 @@ public class NgsiLdToCkan extends AbstractProcessor {
             session.getProvenanceReporter().send(flowFile, "report");
             session.transfer(flowFile, REL_SUCCESS);
         } catch (Exception e) {
-            getLogger().error("Failed to insert {} into CKAN due to {}", new Object[] {flowFile, e}, e);
+            getLogger().error("Failed to insert {} into CKAN due to {}", new Object[]{flowFile, e}, e);
             session.putAttribute(flowFile, "ckan.error.details", e.getMessage());
             session.transfer(flowFile, REL_FAILURE);
             context.yield();

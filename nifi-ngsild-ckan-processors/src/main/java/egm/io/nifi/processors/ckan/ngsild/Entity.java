@@ -12,7 +12,7 @@ public class Entity {
     public Entity(String entityId, String entityType, ArrayList<AttributesLD> entityAttrsLD) {
         this.entityId = entityId;
         this.entityType = entityType;
-        this.entityAttrsLD=entityAttrsLD;
+        this.entityAttrsLD = entityAttrsLD;
     }
 
     public ArrayList<AttributesLD> getEntityAttrsLD() {

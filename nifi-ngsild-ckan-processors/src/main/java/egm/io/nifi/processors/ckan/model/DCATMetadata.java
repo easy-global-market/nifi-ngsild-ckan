@@ -6,7 +6,7 @@ public class DCATMetadata {
     private String contactPoint;
     private String contactName;
     private String contactEmail;
-    private String [] keywords;
+    private String[] keywords;
     private String publisherURL;
     private String spatialUri;
     private String spatialCoverage;
@@ -29,7 +29,7 @@ public class DCATMetadata {
     private String resourceName;
     private String resourceRights;
 
-    public DCATMetadata(String packageDescription, String packageName, String contactPoint, String contactName, String contactEmail, String [] keywords, String publisherURL, String spatialUri, String spatialCoverage, String temporalStart, String temporalEnd, String themes, String version, String landingPage, String visibility, String datasetRights, String accessURL, String availability, String resourceDescription, String format, String mimeType, String license, String licenseType, String downloadURL, String byteSize, String resourceName, String resourceRights) {
+    public DCATMetadata(String packageDescription, String packageName, String contactPoint, String contactName, String contactEmail, String[] keywords, String publisherURL, String spatialUri, String spatialCoverage, String temporalStart, String temporalEnd, String themes, String version, String landingPage, String visibility, String datasetRights, String accessURL, String availability, String resourceDescription, String format, String mimeType, String license, String licenseType, String downloadURL, String byteSize, String resourceName, String resourceRights) {
         this.packageDescription = packageDescription;
         this.packageName = packageName;
         this.contactPoint = contactPoint;
@@ -79,16 +79,16 @@ public class DCATMetadata {
         return contactPoint;
     }
 
+    public void setContactPoint(String contactPoint) {
+        this.contactPoint = contactPoint;
+    }
+
     public String getSpatialUri() {
         return spatialUri;
     }
 
     public void setSpatialUri(String spatialUri) {
         this.spatialUri = spatialUri;
-    }
-
-    public void setContactPoint(String contactPoint) {
-        this.contactPoint = contactPoint;
     }
 
     public String getContactName() {
@@ -107,11 +107,11 @@ public class DCATMetadata {
         this.contactEmail = contactEmail;
     }
 
-    public String [] getKeywords() {
+    public String[] getKeywords() {
         return keywords;
     }
 
-    public void setKeywords(String [] keywords) {
+    public void setKeywords(String[] keywords) {
         this.keywords = keywords;
     }
 
@@ -263,7 +263,9 @@ public class DCATMetadata {
         return resourceName;
     }
 
-    public void setResourceName(String resourceName) {this.resourceName = resourceName;}
+    public void setResourceName(String resourceName) {
+        this.resourceName = resourceName;
+    }
 
     public String getResourceRights() {
         return resourceRights;

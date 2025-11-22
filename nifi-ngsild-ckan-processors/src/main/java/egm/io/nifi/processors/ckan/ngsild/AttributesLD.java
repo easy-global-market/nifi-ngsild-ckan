@@ -10,6 +10,16 @@ public class AttributesLD {
     public boolean hasSubAttrs;
     public ArrayList<AttributesLD> subAttrs;
 
+    public AttributesLD(String attrName, String attrType, String attrValue, String datasetId, boolean hasSubAttrs, ArrayList<AttributesLD> subAttrs) {
+        this.attrName = attrName;
+        this.attrType = attrType;
+        this.attrValue = attrValue;
+        this.datasetId = datasetId;
+        this.hasSubAttrs = hasSubAttrs;
+        this.subAttrs = subAttrs;
+
+    }
+
     public boolean isHasSubAttrs() {
         return hasSubAttrs;
     }
@@ -41,17 +51,13 @@ public class AttributesLD {
     public void setAttrValue(String attrValue) {
         this.attrValue = attrValue;
     }
-    public String getDatasetId() { return datasetId; }
-    public void setDatasetId(String datasetId) { this.datasetId = datasetId; }
 
-    public AttributesLD(String attrName, String attrType, String attrValue, String datasetId, boolean hasSubAttrs, ArrayList<AttributesLD> subAttrs) {
-        this.attrName = attrName;
-        this.attrType = attrType;
-        this.attrValue = attrValue;
+    public String getDatasetId() {
+        return datasetId;
+    }
+
+    public void setDatasetId(String datasetId) {
         this.datasetId = datasetId;
-        this.hasSubAttrs = hasSubAttrs;
-        this.subAttrs= subAttrs;
-
     }
 
     @Override

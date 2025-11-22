@@ -15,6 +15,7 @@ public final class NGSICharsets {
 
     /**
      * Encodes a string for CKAN. Only lowercase alphanumerics, - and _ are allowed.
+     *
      * @param in
      * @return The encoded string
      */
@@ -27,9 +28,9 @@ public final class NGSICharsets {
 
             if (code >= 97 && code <= 122) { // a-z --> a-z
                 out += c;
-            }  else if (code >= 48 && code <= 57) { // 0-9 --> 0-9
+            } else if (code >= 48 && code <= 57) { // 0-9 --> 0-9
                 out += c;
-            } else if (c == '_' || c == '-' ) {
+            } else if (c == '_' || c == '-') {
                 out += c;
             } else { // --> any other special character
                 out += '-';

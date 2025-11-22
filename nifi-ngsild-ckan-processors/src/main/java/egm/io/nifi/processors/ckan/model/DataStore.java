@@ -11,7 +11,8 @@ public class DataStore {
     private String force;
     private String aliases;
 
-    public DataStore(){}
+    public DataStore() {
+    }
 
     public ArrayList<JsonElement> getFields() {
         return fields;
@@ -37,5 +38,7 @@ public class DataStore {
         this.force = force;
     }
 
-    public void setAliases(String aliases) { this.aliases = aliases; }
+    public void setAliases(String aliases) {
+        this.aliases = aliases;
+    }
 }
