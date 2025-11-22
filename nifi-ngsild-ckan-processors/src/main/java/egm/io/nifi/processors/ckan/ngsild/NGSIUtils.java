@@ -25,8 +25,8 @@ public class NGSIUtils {
             List.of(NGSILD_TYPE, NGSILD_VALUE, NGSILD_OBJECT, NGSILD_JSON, NGSILD_CREATED_AT, NGSILD_MODIFIED_AT, NGSILD_DATASET_ID);
 
     public static String getSpecificAttributeValue(Entity entity, String attributeName) {
-        ArrayList<AttributesLD> entityAttributes = entity.getEntityAttrsLD();
-        for (AttributesLD attr : entityAttributes) {
+        ArrayList<Attributes> entityAttributes = entity.getEntityAttrs();
+        for (Attributes attr : entityAttributes) {
             if (attr.getAttrName().equalsIgnoreCase(attributeName))
                 return attr.getAttrValue();
         }
@@ -55,7 +55,7 @@ public class NGSIUtils {
             JSONObject lData = data.getJSONObject(i);
             entityId = lData.getString(NGSILD_ID);
             entityType = parseEntityTypes(lData);
-            ArrayList<AttributesLD> attributes = new ArrayList<>();
+            ArrayList<Attributes> attributes = new ArrayList<>();
             Iterator<String> keys = lData.keys();
 
             while (keys.hasNext()) {
@@ -67,12 +67,12 @@ public class NGSIUtils {
                         JSONArray values = lData.getJSONArray(key);
                         for (int j = 0; j < values.length(); j++) {
                             JSONObject value = values.getJSONObject(j);
-                            AttributesLD attribute = parseNgsiLdAttribute(key, value);
+                            Attributes attribute = parseNgsiLdAttribute(key, value);
                             addAttributeIfValid(attributes, attribute);
                         }
                     } else if (object instanceof JSONObject) {
                         JSONObject value = lData.getJSONObject(key);
-                        AttributesLD attribute = parseNgsiLdAttribute(key, value);
+                        Attributes attribute = parseNgsiLdAttribute(key, value);
                         addAttributeIfValid(attributes, attribute);
 
                     }
@@ -84,11 +84,11 @@ public class NGSIUtils {
         return event;
     }
 
-    private AttributesLD parseNgsiLdAttribute(String key, JSONObject value) {
+    private Attributes parseNgsiLdAttribute(String key, JSONObject value) {
         String attrType;
         String attrValue = "";
         String datasetId;
-        ArrayList<AttributesLD> subAttributes = new ArrayList<>();
+        ArrayList<Attributes> subAttributes = new ArrayList<>();
 
         attrType = value.getString(NGSILD_TYPE);
         datasetId = value.optString(NGSILD_DATASET_ID);
@@ -106,20 +106,20 @@ public class NGSIUtils {
                 // Do Nothing
             } else if (keyOne.equals(NGSILD_OBSERVED_AT) || keyOne.equals(NGSILD_UNIT_CODE)) {
                 subAttributes.add(
-                        new AttributesLD(keyOne, "NonReifiedProperty", value.getString(keyOne), "", false, null)
+                        new Attributes(keyOne, "NonReifiedProperty", value.getString(keyOne), "", false, null)
                 );
             } else {
                 JSONObject value2 = value.getJSONObject(keyOne);
                 String subAttrType = value2.get(NGSILD_TYPE).toString();
                 if (NGSILD_RELATIONSHIP.contentEquals(subAttrType)) {
                     String subAttrValue = value2.get(NGSILD_OBJECT).toString();
-                    subAttributes.add(new AttributesLD(keyOne, subAttrType, subAttrValue, "", false, null));
+                    subAttributes.add(new Attributes(keyOne, subAttrType, subAttrValue, "", false, null));
                 } else if (NGSILD_PROPERTY.contentEquals(subAttrType)) {
                     String subAttrValue = value2.get(NGSILD_VALUE).toString();
-                    subAttributes.add(new AttributesLD(keyOne, subAttrType, subAttrValue, "", false, null));
+                    subAttributes.add(new Attributes(keyOne, subAttrType, subAttrValue, "", false, null));
                 } else if (NGSILD_GEOPROPERTY.contentEquals(subAttrType)) {
                     String subAttrValue = value2.get(NGSILD_VALUE).toString();
-                    subAttributes.add(new AttributesLD(keyOne, subAttrType, subAttrValue, "", false, null));
+                    subAttributes.add(new Attributes(keyOne, subAttrType, subAttrValue, "", false, null));
                 } else if ("entity".equals(keyOne)) {
                     value2.remove(NGSILD_ID);
                     value2.remove(NGSILD_TYPE);
@@ -131,11 +131,11 @@ public class NGSIUtils {
                             JSONArray valuesArray = value2.getJSONArray(relationKey);
                             for (int j = 0; j < valuesArray.length(); j++) {
                                 JSONObject valueObject = valuesArray.getJSONObject(j);
-                                AttributesLD subAttribute = parseNgsiLdSubAttribute(relationKey, valueObject);
+                                Attributes subAttribute = parseNgsiLdSubAttribute(relationKey, valueObject);
                                 addAttributeIfValid(subAttributes, subAttribute);
                             }
                         } else if (object instanceof JSONObject) {
-                            AttributesLD subAttribute = parseNgsiLdSubAttribute(relationKey, (JSONObject) object);
+                            Attributes subAttribute = parseNgsiLdSubAttribute(relationKey, (JSONObject) object);
                             addAttributeIfValid(subAttributes, subAttribute);
                         } else {
                             logger.info("Sub Attribute {} has unexpected value type: {}", relationKey, object.getClass());
@@ -144,7 +144,7 @@ public class NGSIUtils {
                 }
             }
         }
-        return new AttributesLD(key, attrType, attrValue, datasetId, !subAttributes.isEmpty(), subAttributes);
+        return new Attributes(key, attrType, attrValue, datasetId, !subAttributes.isEmpty(), subAttributes);
     }
 
     private String parseEntityTypes(JSONObject temporalEntity) {
@@ -159,7 +159,7 @@ public class NGSIUtils {
         }
     }
 
-    private AttributesLD parseNgsiLdSubAttribute(String key, JSONObject value) {
+    private Attributes parseNgsiLdSubAttribute(String key, JSONObject value) {
         String subAttrType = value.get(NGSILD_TYPE).toString();
         String subAttrValue = "";
         if (NGSILD_RELATIONSHIP.contentEquals(subAttrType)) {
@@ -170,14 +170,14 @@ public class NGSIUtils {
             subAttrValue = value.get(NGSILD_VALUE).toString();
         }
 
-        return new AttributesLD(key.toLowerCase(), subAttrType, subAttrValue, "", false, null);
+        return new Attributes(key.toLowerCase(), subAttrType, subAttrValue, "", false, null);
     }
 
     // When this processor is used in a flow with a `Join Enrichment` processor, it harmonizes JSON among all processed entities,
     // for instance adding attributes which are not present by default in an entity.
     // In this case, these attributes are null or can have a null value.
     // So we filter out attributes that contain a null value or whose whole value is null
-    private void addAttributeIfValid(List<AttributesLD> attributes, AttributesLD attribute) {
+    private void addAttributeIfValid(List<Attributes> attributes, Attributes attribute) {
         if (attribute != null &&
                 attribute.getAttrValue() != null &&
                 !Objects.equals(attribute.getAttrValue(), "null"))

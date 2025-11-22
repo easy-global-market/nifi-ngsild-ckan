@@ -2,15 +2,15 @@ package egm.io.nifi.processors.ckan.ngsild;
 
 import java.util.ArrayList;
 
-public class AttributesLD {
+public class Attributes {
     public String attrName;
     public String attrType;
     public String attrValue;
     public String datasetId;
     public boolean hasSubAttrs;
-    public ArrayList<AttributesLD> subAttrs;
+    public ArrayList<Attributes> subAttrs;
 
-    public AttributesLD(String attrName, String attrType, String attrValue, String datasetId, boolean hasSubAttrs, ArrayList<AttributesLD> subAttrs) {
+    public Attributes(String attrName, String attrType, String attrValue, String datasetId, boolean hasSubAttrs, ArrayList<Attributes> subAttrs) {
         this.attrName = attrName;
         this.attrType = attrType;
         this.attrValue = attrValue;
@@ -24,7 +24,7 @@ public class AttributesLD {
         return hasSubAttrs;
     }
 
-    public ArrayList<AttributesLD> getSubAttrs() {
+    public ArrayList<Attributes> getSubAttrs() {
         return subAttrs;
     }
 
@@ -32,32 +32,16 @@ public class AttributesLD {
         return attrName;
     }
 
-    public void setAttrName(String attrName) {
-        this.attrName = attrName;
-    }
-
     public String getAttrType() {
         return attrType;
-    }
-
-    public void setAttrType(String attrType) {
-        this.attrType = attrType;
     }
 
     public String getAttrValue() {
         return attrValue;
     }
 
-    public void setAttrValue(String attrValue) {
-        this.attrValue = attrValue;
-    }
-
     public String getDatasetId() {
         return datasetId;
-    }
-
-    public void setDatasetId(String datasetId) {
-        this.datasetId = datasetId;
     }
 
     @Override
