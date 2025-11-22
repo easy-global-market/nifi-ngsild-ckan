@@ -5,7 +5,6 @@ import java.util.ArrayList;
 public class Entity {
     public String entityId;
     public String entityType;
-    public ArrayList<Attributes> entityAttrs;
     public ArrayList<AttributesLD> entityAttrsLD;
 
 
@@ -31,14 +30,6 @@ public class Entity {
         this.entityType = entityType;
     }
 
-    public ArrayList<Attributes> getEntityAttrs() {
-        return entityAttrs;
-    }
-
-    public void setEntityAttrs(ArrayList<Attributes> entityAttrs) {
-        this.entityAttrs = entityAttrs;
-    }
-
     public String getEntityId() {
         return entityId;
     }
@@ -52,7 +43,6 @@ public class Entity {
         return "Entity{" +
                 "entityId='" + entityId + '\'' +
                 ", entityType='" + entityType + '\'' +
-                ", entityAttrs=" + entityAttrs +
                 ", entityAttrsLD=" + entityAttrsLD +
                 '}';
     }
