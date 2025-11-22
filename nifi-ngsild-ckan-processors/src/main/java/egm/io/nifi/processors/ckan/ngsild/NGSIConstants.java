@@ -27,6 +27,8 @@ public final class NGSIConstants {
     public static final String NGSILD_DATA = "data";
     public static final String NGSILD_DATASET_ID = "datasetId";
 
+    // DCAT specific attributes
+    public static final String DCAT_SERVES_DATASET = "servesDataset";
 
     // JSON-LD format
     public static final String JSON_LD_FORMAT = "application/ld+json";

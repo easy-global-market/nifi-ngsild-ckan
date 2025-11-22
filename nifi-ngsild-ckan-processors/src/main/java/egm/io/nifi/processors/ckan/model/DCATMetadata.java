@@ -1,5 +1,7 @@
 package egm.io.nifi.processors.ckan.model;
 
+import java.util.Arrays;
+
 public class DCATMetadata {
     private String packageDescription;
     private String packageName;
@@ -29,34 +31,7 @@ public class DCATMetadata {
     private String resourceName;
     private String resourceRights;
 
-    public DCATMetadata(String packageDescription, String packageName, String contactPoint, String contactName, String contactEmail, String[] keywords, String publisherURL, String spatialUri, String spatialCoverage, String temporalStart, String temporalEnd, String themes, String version, String landingPage, String visibility, String datasetRights, String accessURL, String availability, String resourceDescription, String format, String mimeType, String license, String licenseType, String downloadURL, String byteSize, String resourceName, String resourceRights) {
-        this.packageDescription = packageDescription;
-        this.packageName = packageName;
-        this.contactPoint = contactPoint;
-        this.contactName = contactName;
-        this.contactEmail = contactEmail;
-        this.keywords = keywords;
-        this.publisherURL = publisherURL;
-        this.spatialUri = spatialUri;
-        this.spatialCoverage = spatialCoverage;
-        this.temporalStart = temporalStart;
-        this.temporalEnd = temporalEnd;
-        this.themes = themes;
-        this.version = version;
-        this.landingPage = landingPage;
-        this.visibility = visibility;
-        this.datasetRights = datasetRights;
-        this.accessURL = accessURL;
-        this.availability = availability;
-        this.resourceDescription = resourceDescription;
-        this.format = format;
-        this.mimeType = mimeType;
-        this.license = license;
-        this.licenseType = licenseType;
-        this.downloadURL = downloadURL;
-        this.byteSize = byteSize;
-        this.resourceName = resourceName;
-        this.resourceRights = resourceRights;
+    public DCATMetadata() {
     }
 
     public String getPackageDescription() {
@@ -283,7 +258,7 @@ public class DCATMetadata {
                 ", contactPoint='" + contactPoint + '\'' +
                 ", contactName='" + contactName + '\'' +
                 ", contactEmail='" + contactEmail + '\'' +
-                ", keywords=" + keywords +
+                ", keywords=" + Arrays.toString(keywords) +
                 ", publisherURL='" + publisherURL + '\'' +
                 ", spatialUri='" + spatialUri + '\'' +
                 ", spatialCoverage='" + spatialCoverage + '\'' +

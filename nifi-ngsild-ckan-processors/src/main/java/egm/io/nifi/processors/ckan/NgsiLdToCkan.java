@@ -140,8 +140,6 @@ public class NgsiLdToCkan extends AbstractProcessor {
         final boolean createDataStore = context.getProperty(CREATE_DATASTORE).asBoolean();
         final String datasetIdPrefixTruncate = context.getProperty(DATASETID_PREFIX_TRUNCATE).getValue();
         final NGSIUtils n = new NGSIUtils();
-        final BuildDCATMetadata buildDCATMetadata = new BuildDCATMetadata();
-        final DCATMetadata dcatMetadata = buildDCATMetadata.getMetadataFromFlowFile(flowFile, session);
         final NGSIEvent event = n.getEventFromFlowFile(flowFile, session);
         final long creationTime = event.getCreationTime();
         CKANAggregator aggregator = new CKANAggregator() {
@@ -152,15 +150,16 @@ public class NgsiLdToCkan extends AbstractProcessor {
         };
         aggregator = aggregator.getAggregator();
 
-        final String orgName = ckanBackend.buildOrgName(dcatMetadata);
         ArrayList<Entity> entities = event.getEntities();
-        getLogger().info("Persisting data at NGSICKANSink: orgName=" + orgName);
-        getLogger().debug("DCAT metadata: {}", dcatMetadata);
 
         for (Entity entity : entities) {
 
             // Update DCATMetadata with Distribution entity attributes
-            buildDCATMetadata.addMetadataFromEntity(entity, dcatMetadata);
+            DCATMetadata dcatMetadata = BuildDCATMetadata.getMetadataFromEntity(entity);
+            getLogger().debug("DCAT metadata: {}", dcatMetadata);
+
+            final String orgName = ckanBackend.buildOrgName(dcatMetadata);
+            getLogger().info("Persisting data in organization {}", orgName);
 
             final String pkgName = ckanBackend.buildPkgName(dcatMetadata);
             final String resName = ckanBackend.buildResName(entity, dcatMetadata);

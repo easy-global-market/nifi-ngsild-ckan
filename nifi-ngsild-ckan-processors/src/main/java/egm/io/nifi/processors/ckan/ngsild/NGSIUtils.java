@@ -35,10 +35,27 @@ public class NGSIUtils {
         return null;
     }
 
+    public static String getSpecificDatasetValue(Entity entity, String attributeName) {
+        Attributes servesDatasetAttribute =
+                entity.getEntityAttrs().stream()
+                        .filter(attr -> DCAT_SERVES_DATASET.equals(attr.getAttrName()))
+                        .findFirst().orElse(null);
+        if (servesDatasetAttribute == null) {
+            logger.warn("Did not find attribute {} in entity {}", DCAT_SERVES_DATASET, entity.getEntityId());
+            return null;
+        }
+        for (Attributes attr : servesDatasetAttribute.getSubAttrs()) {
+            if (attr.getAttrName().equalsIgnoreCase(attributeName))
+                return attr.getAttrValue();
+        }
+        logger.info("Did not find dataset attribute {} in entity {}", attributeName, entity.getEntityId());
+
+        return null;
+    }
+
     public NGSIEvent getEventFromFlowFile(FlowFile flowFile, final ProcessSession session) {
 
         final byte[] buffer = new byte[(int) flowFile.getSize()];
-        final Logger logger = LoggerFactory.getLogger(NGSIUtils.class);
 
         session.read(flowFile, in -> StreamUtils.fillBuffer(in, buffer));
         final String flowFileContent = new String(buffer, StandardCharsets.UTF_8);

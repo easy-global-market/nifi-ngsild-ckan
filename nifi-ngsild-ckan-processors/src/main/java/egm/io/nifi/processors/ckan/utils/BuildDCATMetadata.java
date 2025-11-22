@@ -3,58 +3,13 @@ package egm.io.nifi.processors.ckan.utils;
 import egm.io.nifi.processors.ckan.model.DCATMetadata;
 import egm.io.nifi.processors.ckan.ngsild.Entity;
 import egm.io.nifi.processors.ckan.ngsild.NGSIUtils;
-import org.apache.commons.collections.map.CaseInsensitiveMap;
-import org.apache.nifi.flowfile.FlowFile;
-import org.apache.nifi.processor.ProcessSession;
-import org.apache.nifi.stream.io.StreamUtils;
-
-import java.util.Map;
 
 import static egm.io.nifi.processors.ckan.ngsild.NGSIConstants.JSON_LD_FORMAT;
 
 public class BuildDCATMetadata {
-    public DCATMetadata getMetadataFromFlowFile(FlowFile flowFile, final ProcessSession session) {
 
-        final byte[] buffer = new byte[(int) flowFile.getSize()];
-
-        session.read(flowFile, in -> StreamUtils.fillBuffer(in, buffer));
-        // Create the PreparedStatement to use for this FlowFile.
-        Map<String, String> flowFileAttributes = flowFile.getAttributes();
-        Map<String, String> newFlowFileAttributes = new CaseInsensitiveMap(flowFileAttributes);
-        String[] keywords = newFlowFileAttributes.get("keyword").replace("[", "").replace("]", "").replaceAll("\"", "").split(",");
-
-        return new DCATMetadata(
-                newFlowFileAttributes.get("packageDescription"),
-                newFlowFileAttributes.get("datasetTitle"),
-                newFlowFileAttributes.get("contactPoint"),
-                newFlowFileAttributes.get("contactName"),
-                newFlowFileAttributes.get("contactEmail"),
-                keywords,
-                newFlowFileAttributes.get("publisherURL"),
-                newFlowFileAttributes.get("spatialUri"),
-                newFlowFileAttributes.get("spatialCoverage"),
-                newFlowFileAttributes.get("temporalStart"),
-                newFlowFileAttributes.get("temporalEnd"),
-                newFlowFileAttributes.get("themes"),
-                newFlowFileAttributes.get("version"),
-                newFlowFileAttributes.get("landingPage"),
-                newFlowFileAttributes.get("visibility"),
-                newFlowFileAttributes.get("datasetRights"),
-                null,
-                null,
-                null,
-                JSON_LD_FORMAT,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
-    }
-
-    public void addMetadataFromEntity(Entity entity, DCATMetadata dcatMetadata) {
+    public static DCATMetadata getMetadataFromEntity(Entity entity) {
+        DCATMetadata dcatMetadata = new DCATMetadata();
         dcatMetadata.setAccessURL(NGSIUtils.getSpecificAttributeValue(entity, "accessURL"));
         dcatMetadata.setAvailability(NGSIUtils.getSpecificAttributeValue(entity, "availability"));
         dcatMetadata.setMimeType(NGSIUtils.getSpecificAttributeValue(entity, "mediaType"));
@@ -65,5 +20,32 @@ public class BuildDCATMetadata {
         dcatMetadata.setResourceDescription(NGSIUtils.getSpecificAttributeValue(entity, "description"));
         dcatMetadata.setResourceName(NGSIUtils.getSpecificAttributeValue(entity, "title"));
         dcatMetadata.setLicenseType(NGSIUtils.getSpecificAttributeValue(entity, "licenseType"));
+        dcatMetadata.setFormat(JSON_LD_FORMAT);
+
+        dcatMetadata.setPackageDescription(NGSIUtils.getSpecificDatasetValue(entity, "description"));
+        dcatMetadata.setPackageName(NGSIUtils.getSpecificDatasetValue(entity, "title"));
+        dcatMetadata.setContactPoint(NGSIUtils.getSpecificDatasetValue(entity, "contactPoint"));
+        dcatMetadata.setContactName(NGSIUtils.getSpecificDatasetValue(entity, "contactName"));
+        dcatMetadata.setContactEmail(NGSIUtils.getSpecificDatasetValue(entity, "contactEmail"));
+        String rawKeywords = NGSIUtils.getSpecificDatasetValue(entity, "keywords");
+        if (rawKeywords != null) {
+            String[] keywords = rawKeywords.replace("[", "")
+                    .replace("]", "")
+                    .replaceAll("\"", "").split(",");
+            dcatMetadata.setKeywords(keywords);
+        }
+        dcatMetadata.setPublisherURL(NGSIUtils.getSpecificDatasetValue(entity, "publisherURL"));
+        dcatMetadata.setSpatialUri(NGSIUtils.getSpecificDatasetValue(entity, "spatialUri"));
+        dcatMetadata.setSpatialCoverage(NGSIUtils.getSpecificDatasetValue(entity, "spatial"));
+        // TODO parse start and end dates for temporal
+        dcatMetadata.setTemporalStart(NGSIUtils.getSpecificDatasetValue(entity, "temporal"));
+        dcatMetadata.setTemporalEnd(NGSIUtils.getSpecificDatasetValue(entity, "temporal"));
+        dcatMetadata.setThemes(NGSIUtils.getSpecificDatasetValue(entity, "theme"));
+        dcatMetadata.setVersion(NGSIUtils.getSpecificDatasetValue(entity, "version"));
+        dcatMetadata.setLandingPage(NGSIUtils.getSpecificDatasetValue(entity, "landingPage"));
+        dcatMetadata.setVisibility(NGSIUtils.getSpecificDatasetValue(entity, "visibility"));
+        dcatMetadata.setDatasetRights(NGSIUtils.getSpecificDatasetValue(entity, "accessRights"));
+
+        return dcatMetadata;
     }
 }
