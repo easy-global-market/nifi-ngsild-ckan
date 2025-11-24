@@ -48,7 +48,7 @@ public class HttpBackend {
             JSONObject jsonPayload = null;
             if (body != null) {
                 String stringBody = body.string();
-                logger.info("Http response payload: {}", body.string());
+                logger.info("Http response payload: {}", stringBody);
 
                 if (!stringBody.isEmpty()) {
                     JSONParser jsonParser = new JSONParser();
