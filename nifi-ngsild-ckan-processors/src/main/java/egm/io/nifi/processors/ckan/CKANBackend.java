@@ -11,7 +11,6 @@ import egm.io.nifi.processors.ckan.model.DataStore;
 import egm.io.nifi.processors.ckan.ngsild.Entity;
 import egm.io.nifi.processors.ckan.ngsild.NGSICharsets;
 import egm.io.nifi.processors.ckan.ngsild.NGSIConstants;
-import egm.io.nifi.processors.ckan.ngsild.NGSIUtils;
 import egm.io.nifi.processors.ckan.utils.CKANCache;
 import okhttp3.Headers;
 import org.json.simple.JSONArray;
@@ -26,7 +25,7 @@ import java.util.Locale;
 public class CKANBackend extends HttpBackend {
 
     private static final Logger logger = LoggerFactory.getLogger(CKANBackend.class);
-    final NGSIUtils ngsiUtils = new NGSIUtils();
+
     private final String apiKey;
     private final String viewer;
     private final CKANCache cache;
@@ -34,16 +33,19 @@ public class CKANBackend extends HttpBackend {
     public CKANBackend(String url, String apiKey, String ckanViewer) {
         super(url);
 
-        // this class attributes
         this.apiKey = apiKey;
         this.viewer = ckanViewer;
+        this.cache = new CKANCache(url, apiKey);
+    }
 
-        // create the cache
-        cache = new CKANCache(url, apiKey);
-    } // CKANBackendImpl
-
-    public void persist(String orgName, String pkgName, String resName, String records, DCATMetadata dcatMetadata, boolean createDataStore)
-            throws Exception {
+    public void persist(
+        String orgName,
+        String pkgName,
+        String resName,
+        String records,
+        DCATMetadata dcatMetadata,
+        boolean createDataStore
+    ) throws Exception {
 
         logger.info("Going to lookup for the resource id, the cache may be updated during the process (orgName=\"{}\", " +
                 "pkgName=\"{}\", resName=\"{}\"", orgName, pkgName, resName);
@@ -63,8 +65,8 @@ public class CKANBackend extends HttpBackend {
                 logger.info("DataStore was not created in the resource (orgName=\"{}\", pkgName=\"{}\", resName/resId=\"{}/{}\")", orgName, pkgName, resName, resId);
 
             }
-        } // if else
-    } // persist
+        }
+    }
 
     /**
      * Lookup or create resources used by cygnus-ngsi-ld and create the datastore with the fields available in the records parameter.

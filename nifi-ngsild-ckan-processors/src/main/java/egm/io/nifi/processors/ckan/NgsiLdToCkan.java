@@ -157,8 +157,6 @@ public class NgsiLdToCkan extends AbstractProcessor {
             getLogger().info("DCAT metadata: {}", dcatMetadata);
 
             final String orgName = ckanBackend.buildOrgName(dcatMetadata);
-            getLogger().info("Persisting data in organization {}", orgName);
-
             final String pkgName = ckanBackend.buildPkgName(dcatMetadata);
             final String resName = ckanBackend.buildResName(entity, dcatMetadata);
 

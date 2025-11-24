@@ -4,17 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-public final class CommonConstants {
-
-    // Maximum values
-    public static final int MAX_CONNS = 500;
-    public static final int MAX_CONNS_PER_ROUTE = 100;
-
-    /**
-     * Constructor. It is private since utility classes should not have a public or default constructor.
-     */
-    private CommonConstants() {
-    } // CommonConstants
+public final class CKANUtils {
 
     /**
      * Gets the human redable version of timestamp expressed in miliseconds.
@@ -28,6 +18,5 @@ public final class CommonConstants {
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
         humanRedable += sdf.format(new Date(ts)) + (addUTC ? "Z" : "");
         return humanRedable;
-    } // getHumanRedable
-
-} // CommonConstants
+    }
+}

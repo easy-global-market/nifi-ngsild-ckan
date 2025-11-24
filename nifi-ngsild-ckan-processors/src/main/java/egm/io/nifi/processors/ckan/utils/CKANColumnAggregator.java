@@ -40,7 +40,7 @@ public class CKANColumnAggregator {
     }
 
     public void initialize(Entity entity, long creationTime, String datasetIdPrefixToTruncate) {
-        String recvTime = CommonConstants.getHumanReadable(creationTime, true);
+        String recvTime = CKANUtils.getHumanReadable(creationTime, true);
 
         aggregation.put(NGSIConstants.RECV_TIME, new JsonPrimitive(recvTime));
         aggregation.put(NGSIConstants.ENTITY_ID, new JsonPrimitive(entity.getEntityId()));
