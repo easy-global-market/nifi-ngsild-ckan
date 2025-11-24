@@ -34,7 +34,7 @@ public class HttpBackend {
         }
 
         Request request = requestBuilder.build();
-        logger.debug("Http request: {}", request);
+        logger.info("Http request: {}", request);
 
         try (Response response = httpClient.newCall(request).execute()) {
             return createJsonResponse(response.body(), response.headers(), response.code());
@@ -48,7 +48,7 @@ public class HttpBackend {
             JSONObject jsonPayload = null;
             if (body != null) {
                 String stringBody = body.string();
-                logger.debug("Http response payload: {}", body);
+                logger.info("Http response payload: {}", body);
 
                 if (!stringBody.isEmpty()) {
                     JSONParser jsonParser = new JSONParser();
