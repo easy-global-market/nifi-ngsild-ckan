@@ -9,9 +9,9 @@ import egm.io.nifi.processors.ckan.http.JsonResponse;
 import egm.io.nifi.processors.ckan.model.DCATMetadata;
 import egm.io.nifi.processors.ckan.model.DataStore;
 import egm.io.nifi.processors.ckan.ngsild.Entity;
-import egm.io.nifi.processors.ckan.ngsild.NGSICharsets;
 import egm.io.nifi.processors.ckan.ngsild.NGSIConstants;
 import egm.io.nifi.processors.ckan.utils.CKANCache;
+import egm.io.nifi.processors.ckan.utils.CKANUtils;
 import okhttp3.Headers;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -449,7 +449,7 @@ public class CKANBackend extends HttpBackend {
             throw new Exception("No organization name found in the metadata!");
         }
 
-        orgName = NGSICharsets.encodeCKAN(finalOrganizationName);
+        orgName = CKANUtils.encodeCKAN(finalOrganizationName);
         int orgNameLength = orgName.length();
 
         if (orgNameLength > NGSIConstants.CKAN_MAX_NAME_LEN) {
@@ -479,7 +479,7 @@ public class CKANBackend extends HttpBackend {
             throw new Exception("No package name found in the metadata!");
         }
 
-        pkgName = NGSICharsets.encodeCKAN(finalPackageName);
+        pkgName = CKANUtils.encodeCKAN(finalPackageName);
 
         if (pkgName.length() > NGSIConstants.CKAN_MAX_NAME_LEN) {
             throw new Exception("Building package name '" + pkgName + "' and its length is "

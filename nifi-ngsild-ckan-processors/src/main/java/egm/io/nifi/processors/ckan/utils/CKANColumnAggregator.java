@@ -5,7 +5,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import egm.io.nifi.processors.ckan.ngsild.Attributes;
 import egm.io.nifi.processors.ckan.ngsild.Entity;
-import egm.io.nifi.processors.ckan.ngsild.NGSICharsets;
 import egm.io.nifi.processors.ckan.ngsild.NGSIConstants;
 
 import java.util.*;
@@ -73,13 +72,12 @@ public class CKANColumnAggregator {
     }
 
     private String encodeAttributeName(String attributeName, String datasetId, String datasetIdPrefixToTruncate) {
-        // For too long dataset ids, truncate to 32 (not perfect, nor totally bulletproof)
         String datasetIdEncodedValue =
                 (!datasetId.isEmpty() ?
-                        "_" + NGSICharsets.encodeCKAN(NGSICharsets.truncateToSize(datasetId.replaceFirst(datasetIdPrefixToTruncate, ""), 32)) :
+                        "_" + CKANUtils.encodeCKAN(datasetId.replaceFirst(datasetIdPrefixToTruncate, "")) :
                         ""
                 );
-        String encodedName = NGSICharsets.encodeCKAN(attributeName) + datasetIdEncodedValue;
+        String encodedName = CKANUtils.encodeCKAN(attributeName) + datasetIdEncodedValue;
         return encodedName.toLowerCase();
     }
 }
