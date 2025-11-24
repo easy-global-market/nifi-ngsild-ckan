@@ -46,7 +46,7 @@ public class Attributes {
 
     @Override
     public String toString() {
-        return "AttributesLD{" +
+        return "Attributes{" +
                 "attrName='" + attrName + '\'' +
                 ", attrType='" + attrType + '\'' +
                 ", attrValue='" + attrValue + '\'' +

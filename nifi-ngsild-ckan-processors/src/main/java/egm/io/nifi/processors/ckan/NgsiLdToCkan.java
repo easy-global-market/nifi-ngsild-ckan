@@ -1,12 +1,13 @@
 package egm.io.nifi.processors.ckan;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import egm.io.nifi.processors.ckan.model.DCATMetadata;
 import egm.io.nifi.processors.ckan.ngsild.Entity;
 import egm.io.nifi.processors.ckan.ngsild.NGSIEvent;
 import egm.io.nifi.processors.ckan.ngsild.NGSIUtils;
 import egm.io.nifi.processors.ckan.utils.BuildDCATMetadata;
-import egm.io.nifi.processors.ckan.utils.CKANAggregator;
+import egm.io.nifi.processors.ckan.utils.CKANColumnAggregator;
 import org.apache.nifi.annotation.behavior.InputRequirement;
 import org.apache.nifi.annotation.behavior.SupportsBatching;
 import org.apache.nifi.annotation.documentation.CapabilityDescription;
@@ -27,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static egm.io.nifi.processors.ckan.ngsild.NGSIConstants.DCAT_PUBLISHER_URL;
 
@@ -144,47 +146,34 @@ public class NgsiLdToCkan extends AbstractProcessor {
         final NGSIUtils n = new NGSIUtils();
         final NGSIEvent event = n.getEventFromFlowFile(flowFile, session);
         final long creationTime = event.getCreationTime();
-        CKANAggregator aggregator = new CKANAggregator() {
-            @Override
-            public void aggregate(Entity entity, long creationTime, String datasetIdPrefixToTruncate) {
-
-            }
-        };
-        aggregator = aggregator.getAggregator();
 
         ArrayList<Entity> entities = event.getEntities();
-
         for (Entity entity : entities) {
 
             // Publisher URL is currently not available from dataset information
             // Use the attribute set in the flow instead
             final String publisherUrl = flowFile.getAttribute(DCAT_PUBLISHER_URL);
             DCATMetadata dcatMetadata = BuildDCATMetadata.getMetadataFromEntity(entity, publisherUrl);
-            getLogger().debug("DCAT metadata: {}", dcatMetadata);
+            getLogger().info("DCAT metadata: {}", dcatMetadata);
 
             final String orgName = ckanBackend.buildOrgName(dcatMetadata);
             getLogger().info("Persisting data in organization {}", orgName);
 
             final String pkgName = ckanBackend.buildPkgName(dcatMetadata);
             final String resName = ckanBackend.buildResName(entity, dcatMetadata);
-            aggregator.initialize(entity);
-            aggregator.aggregate(entity, creationTime, datasetIdPrefixTruncate);
-            ArrayList<JsonObject> jsonObjects = CKANAggregator.linkedHashMapToJson(aggregator.getAggregationToPersist());
-            String aggregation = "";
 
-            for (JsonObject jsonObject : jsonObjects) {
-                if (aggregation.isEmpty()) {
-                    aggregation = jsonObject.toString();
-                } else {
-                    aggregation += "," + jsonObject;
-                }
-            }
+            CKANColumnAggregator aggregator = new CKANColumnAggregator();
+            aggregator.initialize(entity, creationTime, datasetIdPrefixTruncate);
+            List<JsonObject> jsonObjects = aggregator.toJsonObjects();
+            String aggregation = jsonObjects.stream()
+                    .map(JsonElement::toString)
+                    .collect(Collectors.joining(","));
 
-            getLogger().info("Persisting data at NGSICKANSink: orgName=" + orgName
+            getLogger().info("Persisting data in CKAN: orgName=" + orgName
                     + ", pkgName=" + pkgName + ", resName=" + resName + ", data=" + aggregation);
 
             ckanBackend.persist(orgName, pkgName, resName, aggregation, dcatMetadata, createDataStore);
-        } // for
+        }
 
     }
 
