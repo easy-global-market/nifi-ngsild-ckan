@@ -177,7 +177,6 @@ public class CKANBackend extends HttpBackend {
     private String createPackage(String pkgName, String orgId, DCATMetadata dcatMetadata) throws Exception {
         JsonArray extrasJsonArray = new JsonArray();
         JsonArray tagsJsonArray = new JsonArray();
-        String[] keywords;
         JsonObject extrasJson = new JsonObject();
         JsonObject tags;
 
@@ -228,11 +227,12 @@ public class CKANBackend extends HttpBackend {
         extrasJson.addProperty("value", dcatMetadata.getDatasetRights());
         extrasJsonArray.add(extrasJson);
 
-        keywords = dcatMetadata.getKeywords();
-        for (String tag : keywords) {
-            tags = new JsonObject();
-            tags.addProperty("name", tag);
-            tagsJsonArray.add(tags);
+        if (dcatMetadata.getKeywords() != null) {
+            for (String tag : dcatMetadata.getKeywords()) {
+                tags = new JsonObject();
+                tags.addProperty("name", tag);
+                tagsJsonArray.add(tags);
+            }
         }
         dataJson.add("extras", extrasJsonArray);
         dataJson.add("tags", tagsJsonArray);
