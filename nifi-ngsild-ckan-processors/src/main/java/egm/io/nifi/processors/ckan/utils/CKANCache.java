@@ -159,7 +159,7 @@ public class CKANCache extends HttpBackend {
         logger.info("Package not found in the cache, querying CKAN for it (orgName=\"{}\", pkgName=\"{}\")", orgName, pkgName);
 
         // query CKAN for the package information
-        String ckanURL = "/api/3/action/package_show?id=" + pkgName;
+        String ckanURL = "/api/3/action/package_search?q=" + pkgName + "&fq=organization:" + orgName;
         Headers headers = new Headers.Builder().add("Authorization", apiKey).build();
         JsonResponse res = doRequest("GET", ckanURL, headers, null);
 
