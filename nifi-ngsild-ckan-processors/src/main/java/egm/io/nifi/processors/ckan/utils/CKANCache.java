@@ -32,7 +32,7 @@ public class CKANCache extends HttpBackend {
         orgMap = new HashMap<>();
         pkgMap = new HashMap<>();
         resMap = new HashMap<>();
-    } // CKANCache
+    }
 
     /**
      * Gets the organization id, given its name.
@@ -151,11 +151,10 @@ public class CKANCache extends HttpBackend {
      * @return True if the organization was cached, false otherwise
      */
     public boolean isCachedPkg(String orgName, String pkgName) throws Exception {
-        // check if the package has already been cached
         if (tree.get(orgName).containsKey(pkgName)) {
             logger.info("Package found in the cache (orgName=\"{}\", pkgName=\"{}\")", orgName, pkgName);
             return true;
-        } // if
+        }
 
         logger.info("Package not found in the cache, querying CKAN for it (orgName=\"{}\", pkgName=\"{}\")", orgName, pkgName);
 
@@ -166,8 +165,11 @@ public class CKANCache extends HttpBackend {
 
         switch (res.statusCode()) {
             case 200:
-                // the package exists in CKAN
                 JSONObject result = (JSONObject) res.jsonObject().get("result");
+                if (result.get("count").equals(0L)) {
+                    logger.info("Package '{}' not found in CKAN", pkgName);
+                    return false;
+                }
 
                 // check if the package is in "deleted" state
                 String pkgState = result.get("state").toString();
@@ -175,7 +177,7 @@ public class CKANCache extends HttpBackend {
                 if (pkgState.equals("deleted")) {
                     throw new Exception("The package '" + pkgName + "' exists but it is in a "
                             + "deleted state");
-                } // if
+                }
 
                 // put the package in the tree and in the package map
                 String pkgId = result.get("id").toString();
@@ -205,21 +207,18 @@ public class CKANCache extends HttpBackend {
      * @param resName Resource name
      * @return True if the organization was cached, false otherwise
      */
-    public boolean isCachedRes(String orgName, String pkgName, String resName)
-            throws Exception {
-        // check if the resource has already been cached
+    public boolean isCachedRes(String orgName, String pkgName, String resName) throws Exception {
         if (tree.get(orgName).get(pkgName).contains(resName)) {
             logger.info("Resource found in the cache (orgName=\"{}\", pkgName=\"{}\", resName=\"{}\")", orgName, pkgName, resName);
             return true;
-        } // if
+        }
 
         logger.info("Resource not found in the cache, querying CKAN for the whole package containing it "
                 + "(orgName=\"{}\", pkgName=\"{}\", resName=\"{}\")", orgName, pkgName, resName);
 
-        // reached this point, we need to query CKAN about the resource, in order to know if it exists in CKAN
-        // nevertheless, the CKAN API allows us to query for a certain resource by id, not by name...
-        // the only solution seems to query for the whole package and check again
-        // query CKAN for the organization information
+        // Reached this point, we need to query CKAN about the resource to know if it exists in CKAN.
+        // The CKAN API allows us to query for a certain resource by id, not by name...
+        // The only solution seems to query for the whole package and check again.
 
         String ckanURL = "/api/3/action/package_show?id=" + pkgName;
         Headers headers = new Headers.Builder().add("Authorization", apiKey).build();
@@ -228,11 +227,9 @@ public class CKANCache extends HttpBackend {
         switch (res.statusCode()) {
             case 200:
                 // the package exists in CKAN
-                logger.info("Package found in CKAN, going to update the cached resources (orgName=\"{}\", pkgName=\"{}\")", orgName, pkgName);
+                logger.info("Package found in CKAN (orgName=\"{}\", pkgName=\"{}\")", orgName, pkgName);
 
                 // there is no need to check if the package is in "deleted" state...
-
-                // there is no need to put the package in the tree nor put it in the package map...
 
                 // get the resource and populate the resource map
                 JSONObject result = (JSONObject) res.jsonObject().get("result");

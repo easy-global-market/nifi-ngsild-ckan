@@ -56,12 +56,9 @@ public class CKANBackend extends HttpBackend {
                     + ", resName=" + resName + ")");
         } else {
             if (createDataStore) {
-
                 logger.info("Going to persist the data (orgName=\"{}\", pkgName=\"{}\", resName/resId=\"{}/{}\")", orgName, pkgName, resName, resId);
-
                 insert(resId, records);
             } else {
-
                 logger.info("DataStore was not created in the resource (orgName=\"{}\", pkgName=\"{}\", resName/resId=\"{}/{}\")", orgName, pkgName, resName, resId);
 
             }
@@ -69,7 +66,7 @@ public class CKANBackend extends HttpBackend {
     }
 
     /**
-     * Look up or create resources used by cygnus-ngsi-ld and create the datastore with the fields available in the records parameter.
+     * Look up or create resources and create the datastore with the fields available in the record.
      *
      * @param orgName The organization in which datastore the record is going to be inserted
      * @param pkgName The package name to be created or lookup to
@@ -115,14 +112,14 @@ public class CKANBackend extends HttpBackend {
         logger.info("The resource was cached (orgName=\"{}\", pkgName=\"{}\", resName=\"{}\")", orgName, pkgName, resName);
 
         return cache.getResId(orgName, pkgName, resName);
-    } // resourceLookupOrCreateDynamicFields
+    }
 
 
     /**
      * Insert records in the datastore.
      *
      * @param resId   The resource in which datastore the record is going to be inserted
-     * @param records Records to be inserted in Json format
+     * @param records Records to be inserted in JSON format
      */
     private void insert(String resId, String records) throws Exception {
         String jsonString = "{ \"resource_id\": \"" + resId
@@ -130,20 +127,16 @@ public class CKANBackend extends HttpBackend {
                 + "\"method\": \"insert\", "
                 + "\"force\": \"true\" }";
 
-        // create the CKAN request URL
         String urlPath = "/api/3/action/datastore_upsert";
-
-        // do the CKAN request
         JsonResponse res = doCKANRequest("POST", urlPath, jsonString);
 
-        // check the status
         if (res.statusCode() == 200) {
             logger.info("Successful insert (resource/datastore id=\"{}\")", resId);
         } else {
             throw new Exception("Could not insert (resId=" + resId + ", statusCode="
                     + res.statusCode() + ", response=" + res.jsonObject().toString() + ")");
-        } // if else
-    } // insert
+        }
+    }
 
     /**
      * Creates an organization in CKAN.
@@ -152,34 +145,27 @@ public class CKANBackend extends HttpBackend {
      * @return The organization id
      */
     private String createOrganization(String orgName, DCATMetadata dcatMetadata) throws Exception {
-        // create the CKAN request JSON
         JsonObject dataJson = new JsonObject();
         dataJson.addProperty("name", orgName);
 
         if (dcatMetadata != null) {
             dataJson.addProperty("title", orgName);
             dataJson.addProperty("name", orgName);
-
-            //dataJson.add("extras",extrasJsonArray);
         }
         logger.debug("dataJson: {}", dataJson);
 
-        // create the CKAN request URL
         String urlPath = "/api/3/action/organization_create";
-
-        // do the CKAN request
         JsonResponse res = doCKANRequest("POST", urlPath, dataJson.toString());
 
-        // check the status
         if (res.statusCode() == 200) {
             String orgId = ((JSONObject) res.jsonObject().get("result")).get("id").toString();
             logger.info("Successful organization creation (orgName/OrgId=\"{}/{}\")", orgName, orgId);
             return orgId;
         } else {
-            throw new Exception("Could not create the orgnaization (orgName=" + orgName
-                    + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject().toString() + ")");
-        } // if else
-    } // createOrganization
+            throw new Exception("Could not create the organization (orgName=" + orgName
+                + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject().toString() + ")");
+        }
+    }
 
     /**
      * Creates a dataset/package within a given organization in CKAN.
@@ -189,7 +175,6 @@ public class CKANBackend extends HttpBackend {
      * @return A package identifier if the package was created or an exception if something went wrong
      */
     private String createPackage(String pkgName, String orgId, DCATMetadata dcatMetadata) throws Exception {
-        // create the CKAN request JSON
         JsonArray extrasJsonArray = new JsonArray();
         JsonArray tagsJsonArray = new JsonArray();
         String[] keywords;
@@ -277,9 +262,9 @@ public class CKANBackend extends HttpBackend {
         */
         } else {
             throw new Exception("Could not create the package (orgId=" + orgId
-                    + ", pkgName=" + pkgName + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject().toString() + ")");
-        } // if else
-    } // createPackage
+                + ", pkgName=" + pkgName + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject().toString() + ")");
+        }
+    }
 
     /**
      * Creates a resource within a given package in CKAN.
@@ -289,11 +274,6 @@ public class CKANBackend extends HttpBackend {
      * @return A resource identifier if the resource was created or an exception if something went wrong
      */
     private String createResource(String resName, String pkgId, DCATMetadata dcatMetadata) throws Exception {
-        // create the CKAN request JSON
-
-        JsonArray extrasJsonArray = new JsonArray();
-        JsonObject extrasJson = new JsonObject();
-
         JsonObject dataJson = new JsonObject();
         dataJson.addProperty("package_id", pkgId);
         dataJson.addProperty("name", resName);
@@ -307,35 +287,34 @@ public class CKANBackend extends HttpBackend {
         dataJson.addProperty("size", dcatMetadata.getByteSize());
         dataJson.addProperty("url", dcatMetadata.getDownloadURL());
         dataJson.addProperty("rights", dcatMetadata.getResourceRights());
+
+        JsonObject extrasJson = new JsonObject();
         extrasJson.addProperty("key", "license_type");
         extrasJson.addProperty("value", dcatMetadata.getLicenseType());
-        dataJson.add("extras", extrasJsonArray);
-        logger.debug("dataJson: {}", dataJson);
-        // create the CKAN request URL
-        String urlPath = "/api/3/action/resource_create";
+        dataJson.add("extras", extrasJson);
 
-        // do the CKAN request
+        logger.debug("dataJson: {}", dataJson);
+
+        String urlPath = "/api/3/action/resource_create";
         JsonResponse res = doCKANRequest("POST", urlPath, dataJson.toString());
 
-        // check the status
         if (res.statusCode() == 200) {
             String resourceId = ((JSONObject) res.jsonObject().get("result")).get("id").toString();
             logger.info("Successful resource creation (resName/resId=\"{}/{}\")", resName, resourceId);
             return resourceId;
         } else {
             throw new Exception("Could not create the resource (pkgId=" + pkgId
-                    + ", resName=" + resName + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject().toString() + ")");
-        } // if else
-    } // createResource
+                + ", resName=" + resName + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject().toString() + ")");
+        }
+    }
 
     /**
      * Creates a datastore for a given resource in CKAN.
      *
      * @param resId   Identifies the resource whose datastore is going to be created.
-     * @param records Array list with the attributes names for being used as fields with column mode
+     * @param records Array list with the attribute names for being used as fields with column mode
      */
     private void createDataStoreWithFields(String resId, String resName, String records) throws Exception {
-        // create the CKAN request JSON
         // CKAN types reference: http://docs.ckan.org/en/ckan-2.2/datastore.html#valid-types
         org.json.JSONObject jsonContent = new org.json.JSONObject(records);
         Iterator<String> keys = jsonContent.keys();
@@ -362,15 +341,11 @@ public class CKANBackend extends HttpBackend {
         dataStore.setForce("true");
         String jsonString = gson.toJson(dataStore);
 
-        logger.info("Successful datastore creation jsonString=\"{}\"", jsonString);
+        logger.info("Asking for datastore creation with: \"{}\"", jsonString);
 
-        // create the CKAN request URL
         String urlPath = "/api/3/action/datastore_create";
-
-        // do the CKAN request
         JsonResponse res = doCKANRequest("POST", urlPath, jsonString);
 
-        // check the status
         if (res.statusCode() == 200) {
             logger.info("Successful datastore creation (resourceId=\"{}\")", resId);
         } else {
@@ -458,10 +433,10 @@ public class CKANBackend extends HttpBackend {
         } else if (orgNameLength < NGSIConstants.CKAN_MIN_NAME_LEN) {
             throw new Exception("Building organization name '" + orgName + "' and its length is "
                     + "lower than " + NGSIConstants.CKAN_MIN_NAME_LEN);
-        } // if else if
+        }
 
         return orgName;
-    } // buildOrgName
+    }
 
     /**
      * Builds a package name given an entity and a package title. It throws an exception if the naming
@@ -512,8 +487,8 @@ public class CKANBackend extends HttpBackend {
         } else if (resName.length() < NGSIConstants.CKAN_MIN_NAME_LEN) {
             throw new Exception("Building resource name '" + resName + "' and its length is "
                     + "lower than " + NGSIConstants.CKAN_MIN_NAME_LEN);
-        } // if else if
+        }
 
         return resName;
-    } // buildResName
+    }
 }
