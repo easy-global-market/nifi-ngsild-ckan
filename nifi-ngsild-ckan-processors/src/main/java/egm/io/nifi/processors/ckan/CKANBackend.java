@@ -445,27 +445,24 @@ public class CKANBackend extends HttpBackend {
      * @return Package name
      */
     public String buildPkgName(DCATMetadata dcatMetadata) throws Exception {
-        String pkgName;
-        String finalPackageName;
-
-        if (dcatMetadata.getPackageName() != null) {
-            finalPackageName = dcatMetadata.getPackageName().toLowerCase(Locale.ENGLISH);
-        } else {
+        if (dcatMetadata.getPackageName() == null)
             throw new Exception("No package name found in the metadata!");
+
+        String encodedPkgName =
+            CKANUtils.encodeCKAN(dcatMetadata.getPackageName().toLowerCase(Locale.ENGLISH)) +
+            "-" +
+            CKANUtils.generateHash(dcatMetadata.getPublisherURL().toLowerCase(Locale.ENGLISH));
+
+        if (encodedPkgName.length() > NGSIConstants.CKAN_MAX_NAME_LEN) {
+            throw new Exception("Building package name '" + encodedPkgName + "' and its length is "
+                    + "greater than " + NGSIConstants.CKAN_MAX_NAME_LEN);
+        } else if (encodedPkgName.length() < NGSIConstants.CKAN_MIN_NAME_LEN) {
+            throw new Exception("Building package name '" + encodedPkgName + "' and its length is "
+                    + "lower than " + NGSIConstants.CKAN_MIN_NAME_LEN);
         }
 
-        pkgName = CKANUtils.encodeCKAN(finalPackageName);
-
-        if (pkgName.length() > NGSIConstants.CKAN_MAX_NAME_LEN) {
-            throw new Exception("Building package name '" + pkgName + "' and its length is "
-                    + "greater than " + NGSIConstants.CKAN_MAX_NAME_LEN);
-        } else if (pkgName.length() < NGSIConstants.CKAN_MIN_NAME_LEN) {
-            throw new Exception("Building package name '" + pkgName + "' and its length is "
-                    + "lower than " + NGSIConstants.CKAN_MIN_NAME_LEN);
-        } // if else if
-
-        return pkgName;
-    } // buildPkgName
+        return encodedPkgName;
+    }
 
     /**
      * Builds a resource name given an entity. It throws an exception if the naming conventions are violated.
