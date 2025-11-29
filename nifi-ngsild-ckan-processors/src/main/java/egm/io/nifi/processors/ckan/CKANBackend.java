@@ -103,7 +103,7 @@ public class CKANBackend extends HttpBackend {
             cache.addRes(orgName, pkgName, resName);
             cache.setResId(orgName, pkgName, resName, resId);
             if (createDataStore) {
-                createDataStoreWithFields(resId, resName, records);
+                createDataStoreWithFields(pkgName, resId, resName, records);
                 createView(resId);
             }
             return resId;
@@ -314,13 +314,12 @@ public class CKANBackend extends HttpBackend {
      * @param resId   Identifies the resource whose datastore is going to be created.
      * @param records Array list with the attribute names for being used as fields with column mode
      */
-    private void createDataStoreWithFields(String resId, String resName, String records) throws Exception {
+    private void createDataStoreWithFields(String pkgName, String resId, String resName, String records) throws Exception {
         // CKAN types reference: http://docs.ckan.org/en/ckan-2.2/datastore.html#valid-types
         org.json.JSONObject jsonContent = new org.json.JSONObject(records);
         Iterator<String> keys = jsonContent.keys();
         ArrayList<String> fields = new ArrayList<>();
         Gson gson = new Gson();
-        DataStore dataStore = new DataStore();
         ArrayList<JsonElement> jsonArray = new ArrayList<>();
 
         while (keys.hasNext()) {
@@ -335,8 +334,10 @@ public class CKANBackend extends HttpBackend {
             jsonArray.add((jsonObject.getAsJsonObject()));
         }
 
+        DataStore dataStore = new DataStore();
         dataStore.setResource_id(resId);
-        dataStore.setAliases(resName);
+        String alias = resName + CKANUtils.generateHash(pkgName);
+        dataStore.setAliases(alias);
         dataStore.setFields(jsonArray);
         dataStore.setForce("true");
         String jsonString = gson.toJson(dataStore);
