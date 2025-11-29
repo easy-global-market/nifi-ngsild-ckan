@@ -419,7 +419,7 @@ public class CKANBackend extends HttpBackend {
         String finalOrganizationName;
 
         if (dcatMetadata.getPublisherURL() != null) {
-            finalOrganizationName = dcatMetadata.getPublisherURL().toLowerCase(Locale.ENGLISH);
+            finalOrganizationName = dcatMetadata.getPublisherURL().trim().toLowerCase(Locale.ENGLISH);
         } else {
             throw new Exception("No organization name found in the metadata!");
         }
@@ -449,9 +449,9 @@ public class CKANBackend extends HttpBackend {
             throw new Exception("No package name found in the metadata!");
 
         String encodedPkgName =
-            CKANUtils.encodeCKAN(dcatMetadata.getPackageName().toLowerCase(Locale.ENGLISH)) +
+            CKANUtils.encodeCKAN(dcatMetadata.getPackageName().trim().toLowerCase(Locale.ENGLISH)) +
             "-" +
-            CKANUtils.generateHash(dcatMetadata.getPublisherURL().toLowerCase(Locale.ENGLISH));
+            CKANUtils.generateHash(dcatMetadata.getPublisherURL().trim().toLowerCase(Locale.ENGLISH));
 
         if (encodedPkgName.length() > NGSIConstants.CKAN_MAX_NAME_LEN) {
             throw new Exception("Building package name '" + encodedPkgName + "' and its length is "
