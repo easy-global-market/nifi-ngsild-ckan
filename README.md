@@ -1,4 +1,4 @@
-# NgsiLdToCkan
+# NGSI-LD to CKAN
 
 [![License: Apache-2.0](https://img.shields.io/github/license/stellio-hub/stellio-context-broker.svg)](https://spdx.org/licenses/Apache-2.0.html)
 ![Build](https://github.com/easy-global-market/nifi-ngsild-ckan/actions/workflows/maven.yml/badge.svg)
