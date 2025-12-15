@@ -1,6 +1,5 @@
 package egm.io.nifi.processors.ckan;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import egm.io.nifi.processors.ckan.model.DCATMetadata;
 import egm.io.nifi.processors.ckan.ngsild.Entity;
@@ -28,7 +27,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 import static egm.io.nifi.processors.ckan.ngsild.NGSIConstants.DCAT_PUBLISHER_URL;
 
@@ -163,14 +161,11 @@ public class NgsiLdToCkan extends AbstractProcessor {
             CKANColumnAggregator aggregator = new CKANColumnAggregator();
             aggregator.initialize(entity, creationTime, datasetIdPrefixTruncate);
             List<JsonObject> jsonObjects = aggregator.toJsonObjects();
-            String aggregation = jsonObjects.stream()
-                    .map(JsonElement::toString)
-                    .collect(Collectors.joining(","));
 
             getLogger().info("Persisting data in CKAN: orgName=" + orgName
-                    + ", pkgName=" + pkgName + ", resName=" + resName + ", data=" + aggregation);
+                    + ", pkgName=" + pkgName + ", resName=" + resName + ", data=" + jsonObjects);
 
-            ckanBackend.persist(orgName, pkgName, resName, aggregation, dcatMetadata, createDataStore);
+            ckanBackend.persist(orgName, pkgName, resName, jsonObjects, dcatMetadata, createDataStore);
         }
 
     }

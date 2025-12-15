@@ -18,9 +18,8 @@ import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Locale;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class CKANBackend extends HttpBackend {
 
@@ -42,13 +41,13 @@ public class CKANBackend extends HttpBackend {
         String orgName,
         String pkgName,
         String resName,
-        String records,
+        List<JsonObject> records,
         DCATMetadata dcatMetadata,
         boolean createDataStore
     ) throws Exception {
 
-        logger.info("Going to lookup for the resource id, the cache may be updated during the process (orgName=\"{}\", " +
-                "pkgName=\"{}\", resName=\"{}\"", orgName, pkgName, resName);
+        logger.info("Going to lookup for the resource id, the cache may be updated during the process (orgName={}, " +
+                "pkgName={}, resName={}", orgName, pkgName, resName);
 
         String resId = resourceLookupOrCreateDynamicFields(orgName, pkgName, resName, records, dcatMetadata, createDataStore);
         if (resId == null) {
@@ -56,10 +55,10 @@ public class CKANBackend extends HttpBackend {
                     + ", resName=" + resName + ")");
         } else {
             if (createDataStore) {
-                logger.info("Going to persist the data (orgName=\"{}\", pkgName=\"{}\", resName/resId=\"{}/{}\")", orgName, pkgName, resName, resId);
+                logger.info("Going to persist the data (orgName={}, pkgName={}, resName/resId={}/{})", orgName, pkgName, resName, resId);
                 insert(resId, records);
             } else {
-                logger.info("DataStore was not created in the resource (orgName=\"{}\", pkgName=\"{}\", resName/resId=\"{}/{}\")", orgName, pkgName, resName, resId);
+                logger.info("DataStore was not created in the resource (orgName={}, pkgName={}, resName/resId={}/{})", orgName, pkgName, resName, resId);
 
             }
         }
@@ -77,7 +76,7 @@ public class CKANBackend extends HttpBackend {
         String orgName,
         String pkgName,
         String resName,
-        String records,
+        List<JsonObject> records,
         DCATMetadata dcatMetadata,
         boolean createDataStore
     ) throws Exception {
@@ -121,9 +120,14 @@ public class CKANBackend extends HttpBackend {
      * @param resId   The resource in which datastore the record is going to be inserted
      * @param records Records to be inserted in JSON format
      */
-    private void insert(String resId, String records) throws Exception {
+    private void insert(String resId, List<JsonObject> records) throws Exception {
+        JsonObject entityRecord = new JsonObject();
+        for (JsonObject record: records) {
+            String key = record.keySet().stream().findFirst().get();
+            entityRecord.add(key, record.get(key));
+        }
         String jsonString = "{ \"resource_id\": \"" + resId
-                + "\", \"records\": [ " + records + " ], "
+                + "\", \"records\": [" + entityRecord + "], "
                 + "\"method\": \"insert\", "
                 + "\"force\": \"true\" }";
 
@@ -314,24 +318,15 @@ public class CKANBackend extends HttpBackend {
      * @param resId   Identifies the resource whose datastore is going to be created.
      * @param records Array list with the attribute names for being used as fields with column mode
      */
-    private void createDataStoreWithFields(String pkgName, String resId, String resName, String records) throws Exception {
+    private void createDataStoreWithFields(String pkgName, String resId, String resName, List<JsonObject> records) throws Exception {
         // CKAN types reference: http://docs.ckan.org/en/ckan-2.2/datastore.html#valid-types
-        org.json.JSONObject jsonContent = new org.json.JSONObject(records);
-        Iterator<String> keys = jsonContent.keys();
-        ArrayList<String> fields = new ArrayList<>();
-        Gson gson = new Gson();
         ArrayList<JsonElement> jsonArray = new ArrayList<>();
-
-        while (keys.hasNext()) {
-            String key = keys.next();
-            fields.add(key);
-        }
-
-        for (String field : fields) {
+        for (JsonObject field : records) {
             JsonObject jsonObject = new JsonObject();
-            jsonObject.addProperty("id", field);
+            jsonObject.addProperty("id", field.keySet().stream().findFirst().get());
             jsonObject.addProperty("type", "text");
-            jsonArray.add((jsonObject.getAsJsonObject()));
+            logger.info("Adding field: {}", jsonObject.get("id").toString());
+            jsonArray.add(jsonObject);
         }
 
         DataStore dataStore = new DataStore();
@@ -340,9 +335,10 @@ public class CKANBackend extends HttpBackend {
         dataStore.setAliases(alias);
         dataStore.setFields(jsonArray);
         dataStore.setForce("true");
+        Gson gson = new Gson();
         String jsonString = gson.toJson(dataStore);
 
-        logger.info("Asking for datastore creation with: \"{}\"", jsonString);
+        logger.info("Asking for datastore creation with: {}", jsonString);
 
         String urlPath = "/api/3/action/datastore_create";
         JsonResponse res = doCKANRequest("POST", urlPath, jsonString);
@@ -352,8 +348,8 @@ public class CKANBackend extends HttpBackend {
         } else {
             throw new Exception("Could not create the datastore (resId=" + resId
                     + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject().toString() + ")");
-        } // if else
-    } // createResource
+        }
+    }
 
     /**
      * Creates a view for a given resource in CKAN.

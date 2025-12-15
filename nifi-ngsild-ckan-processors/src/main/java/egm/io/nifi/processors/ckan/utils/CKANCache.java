@@ -172,8 +172,9 @@ public class CKANCache extends HttpBackend {
                     return false;
                 }
 
+                JSONObject pkgObject = ((JSONObject) ((JSONArray) result.get("results")).getFirst());
                 // check if the package is in "deleted" state
-                String pkgState = result.get("state").toString();
+                String pkgState = pkgObject.get("state").toString();
 
                 if (pkgState.equals("deleted")) {
                     throw new Exception("The package '" + pkgName + "' exists but it is in a "
@@ -181,14 +182,14 @@ public class CKANCache extends HttpBackend {
                 }
 
                 // put the package in the tree and in the package map
-                String pkgId = result.get("id").toString();
+                String pkgId = pkgObject.get("id").toString();
                 tree.get(orgName).put(pkgName, new ArrayList<>());
                 setPkgId(orgName, pkgName, pkgId);
-                logger.info("Package found in CKAN, now cached (orgName=\"{}\", pkgName/pkgId=\"{}/{}\")", orgName, pkgName, pkgId);
+                logger.info("Package found in CKAN, now cached (orgName={}, pkgName/pkgId={}/{})", orgName, pkgName, pkgId);
 
                 // get the resource and populate the resource map
-                JSONArray resources = (JSONArray) result.get("resources");
-                logger.info("Going to populate the resources cache (orgName=\"{}\", pkgName=\"{}\")", orgName, pkgName);
+                JSONArray resources = (JSONArray) pkgObject.get("resources");
+                logger.info("Going to populate the resources cache (orgName={}, pkgName={})", orgName, pkgName);
                 populateResourcesMap(resources, orgName, pkgName, false);
                 return true;
             case 404:
@@ -271,34 +272,30 @@ public class CKANCache extends HttpBackend {
      * @param checkExistence If true, checks if the queried resource already exists in the cache
      */
     private void populateResourcesMap(JSONArray resources, String orgName, String pkgName, boolean checkExistence) {
-        // this check is for debuging purposes
         if (resources == null || resources.isEmpty()) {
             logger.info("The resources list is empty, nothing to cache");
             return;
-        } // if
+        }
 
-        logger.info("Resources to be populated: \"{}\" (orgName=\"{}\", pkgName=\"{}\")", resources, orgName, pkgName);
+        logger.info("Resources to be populated: {} (orgName={}, pkgName={})", resources, orgName, pkgName);
 
-        // iterate on the resources
-        Iterator<JSONObject> iterator = resources.iterator();
-
-        while (iterator.hasNext()) {
+        for (Object resource : resources) {
             // get the resource name and id (resources cannot be in deleted state)
-            JSONObject factObj = iterator.next();
-            String resourceName = (String) factObj.get("name");
-            String resourceId = (String) factObj.get("id");
+            JSONObject resourceObject = (JSONObject) resource;
+            String resourceName = (String) resourceObject.get("name");
+            String resourceId = (String) resourceObject.get("id");
 
             // put the resource in the tree and in the resource map
             if (checkExistence) {
                 if (tree.get(orgName).get(pkgName).contains(resourceName)) {
                     continue;
-                } // if
-            } // if
+                }
+            }
 
             tree.get(orgName).get(pkgName).add(resourceName);
             this.setResId(orgName, pkgName, resourceName, resourceId);
-            logger.info("Resource found in CKAN, now cached (orgName=\"{}\" -> pkgName=\"{}\" -> " +
-                    "resourceName/resourceId=\"{}/{}\")", orgName, pkgName, resourceName, resourceId);
-        } // while
-    } // populateResourcesMap
-} // CKANCache
+            logger.info("Resource found in CKAN, now cached (orgName={}, pkgName={}, " +
+                "resourceName/resourceId={}/{})", orgName, pkgName, resourceName, resourceId);
+        }
+    }
+}
