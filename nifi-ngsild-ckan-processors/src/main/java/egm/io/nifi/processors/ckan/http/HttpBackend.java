@@ -1,8 +1,9 @@
 package egm.io.nifi.processors.ckan.http;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import okhttp3.*;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,35 +38,31 @@ public class HttpBackend {
         logger.info("Http request: {}", request);
 
         try (Response response = httpClient.newCall(request).execute()) {
-            return createJsonResponse(response.body(), response.headers(), response.code());
+            return createJsonResponse(response.body(), response.code());
         }
     }
 
-    private JsonResponse createJsonResponse(ResponseBody body, Headers headers, int status) throws Exception {
+    private JsonResponse createJsonResponse(ResponseBody body, int status) throws Exception {
         try {
             logger.info("Http response status: {}", status);
 
-            JSONObject jsonPayload = null;
+            JsonObject jsonPayload = null;
             if (body != null) {
                 String stringBody = body.string();
                 logger.info("Http response payload: {}", stringBody);
 
                 if (!stringBody.isEmpty()) {
-                    JSONParser jsonParser = new JSONParser();
-
                     if (stringBody.startsWith("[")) {
-                        Object object = jsonParser.parse(stringBody);
-                        jsonPayload = new JSONObject();
-                        jsonPayload.put("result", object);
+                        JsonArray array = JsonParser.parseString(stringBody).getAsJsonArray();
+                        jsonPayload = new JsonObject();
+                        jsonPayload.add("result", array);
                     } else {
-                        jsonPayload = (JSONObject) jsonParser.parse(stringBody);
+                        jsonPayload = JsonParser.parseString(stringBody).getAsJsonObject();
                     }
                 }
             }
 
-            String locationHeader = headers.get("Location");
-
-            return new JsonResponse(jsonPayload, status, locationHeader);
+            return new JsonResponse(jsonPayload, status);
         } catch (IllegalStateException e) {
             throw new Exception(e.getMessage());
         }

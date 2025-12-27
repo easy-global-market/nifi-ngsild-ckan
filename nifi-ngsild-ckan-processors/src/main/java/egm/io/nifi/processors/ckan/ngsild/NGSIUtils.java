@@ -1,16 +1,17 @@
 package egm.io.nifi.processors.ckan.ngsild;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.apache.nifi.flowfile.FlowFile;
 import org.apache.nifi.processor.ProcessSession;
 import org.apache.nifi.stream.io.StreamUtils;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -60,38 +61,35 @@ public class NGSIUtils {
         session.read(flowFile, in -> StreamUtils.fillBuffer(in, buffer));
         final String flowFileContent = new String(buffer, StandardCharsets.UTF_8);
         long creationTime = flowFile.getEntryDate();
-        JSONObject content = new JSONObject(flowFileContent);
-        JSONArray data;
+        JsonObject content = JsonParser.parseString(flowFileContent).getAsJsonObject();
+        JsonArray data;
         String entityType;
         String entityId;
         ArrayList<Entity> entities = new ArrayList<>();
         NGSIEvent event;
 
-        data = (JSONArray) content.get(NGSILD_DATA);
-        for (int i = 0; i < data.length(); i++) {
-            JSONObject lData = data.getJSONObject(i);
-            entityId = lData.getString(NGSILD_ID);
+        data = content.getAsJsonArray(NGSILD_DATA);
+        for (int i = 0; i < data.size(); i++) {
+            JsonObject lData = data.get(i).getAsJsonObject();
+            entityId = lData.get(NGSILD_ID).getAsString();
             entityType = parseEntityTypes(lData);
             ArrayList<Attributes> attributes = new ArrayList<>();
-            Iterator<String> keys = lData.keys();
 
-            while (keys.hasNext()) {
-                String key = keys.next();
+            for (String key : lData.keySet()) {
                 if (!NGSILD_ID.equals(key) && !NGSILD_TYPE.equals(key) && !NGSILD_CONTEXT.equals(key)) {
-                    Object object = lData.get(key);
-                    if (object instanceof JSONArray) {
+                    JsonElement element = lData.get(key);
+                    if (element.isJsonArray()) {
                         // it is a multi-attribute (see section 4.5.5 in NGSI-LD specification)
-                        JSONArray values = lData.getJSONArray(key);
-                        for (int j = 0; j < values.length(); j++) {
-                            JSONObject value = values.getJSONObject(j);
+                        JsonArray values = element.getAsJsonArray();
+                        for (int j = 0; j < values.size(); j++) {
+                            JsonObject value = values.get(j).getAsJsonObject();
                             Attributes attribute = parseNgsiLdAttribute(key, value);
                             addAttributeIfValid(attributes, attribute);
                         }
-                    } else if (object instanceof JSONObject) {
-                        JSONObject value = lData.getJSONObject(key);
+                    } else if (element.isJsonObject()) {
+                        JsonObject value = element.getAsJsonObject();
                         Attributes attribute = parseNgsiLdAttribute(key, value);
                         addAttributeIfValid(attributes, attribute);
-
                     }
                 }
             }
@@ -101,14 +99,15 @@ public class NGSIUtils {
         return event;
     }
 
-    private Attributes parseNgsiLdAttribute(String key, JSONObject value) {
+    private Attributes parseNgsiLdAttribute(String key, JsonObject value) {
         String attrType;
         String attrValue = "";
         String datasetId;
         ArrayList<Attributes> subAttributes = new ArrayList<>();
 
-        attrType = value.getString(NGSILD_TYPE);
-        datasetId = value.optString(NGSILD_DATASET_ID);
+        attrType = value.get(NGSILD_TYPE).getAsString();
+        datasetId = value.has(NGSILD_DATASET_ID) ? value.get(NGSILD_DATASET_ID).getAsString() : "";
+        
         if (NGSILD_RELATIONSHIP.contentEquals(attrType)) {
             attrValue = value.get(NGSILD_OBJECT).toString();
         } else if (NGSILD_PROPERTY.contentEquals(attrType)) {
@@ -116,18 +115,17 @@ public class NGSIUtils {
         } else if (NGSILD_GEOPROPERTY.contentEquals(attrType)) {
             attrValue = value.get(NGSILD_VALUE).toString();
         }
-        Iterator<String> keysOneLevel = value.keys();
-        while (keysOneLevel.hasNext()) {
-            String keyOne = keysOneLevel.next();
+
+        for (String keyOne : value.keySet()) {
             if (IGNORED_KEYS_ON_ATTRIBUTES.contains(keyOne)) {
                 // Do Nothing
             } else if (keyOne.equals(NGSILD_OBSERVED_AT) || keyOne.equals(NGSILD_UNIT_CODE)) {
                 subAttributes.add(
-                        new Attributes(keyOne, "NonReifiedProperty", value.getString(keyOne), "", false, null)
+                        new Attributes(keyOne, "NonReifiedProperty", value.get(keyOne).getAsString(), "", false, null)
                 );
             } else {
-                JSONObject value2 = value.getJSONObject(keyOne);
-                String subAttrType = value2.get(NGSILD_TYPE).toString();
+                JsonObject value2 = value.getAsJsonObject(keyOne);
+                String subAttrType = value2.get(NGSILD_TYPE).getAsString();
                 if (NGSILD_RELATIONSHIP.contentEquals(subAttrType)) {
                     String subAttrValue = value2.get(NGSILD_OBJECT).toString();
                     subAttributes.add(new Attributes(keyOne, subAttrType, subAttrValue, "", false, null));
@@ -142,17 +140,17 @@ public class NGSIUtils {
                     value2.remove(NGSILD_TYPE);
 
                     for (String relationKey : value2.keySet()) {
-                        Object object = value2.get(relationKey);
-                        if (object instanceof JSONArray) {
+                        JsonElement object = value2.get(relationKey);
+                        if (object.isJsonArray()) {
                             // it is a multi-attribute (see section 4.5.5 in NGSI-LD specification)
-                            JSONArray valuesArray = value2.getJSONArray(relationKey);
-                            for (int j = 0; j < valuesArray.length(); j++) {
-                                JSONObject valueObject = valuesArray.getJSONObject(j);
+                            JsonArray valuesArray = object.getAsJsonArray();
+                            for (int j = 0; j < valuesArray.size(); j++) {
+                                JsonObject valueObject = valuesArray.get(j).getAsJsonObject();
                                 Attributes subAttribute = parseNgsiLdSubAttribute(relationKey, valueObject);
                                 addAttributeIfValid(subAttributes, subAttribute);
                             }
-                        } else if (object instanceof JSONObject) {
-                            Attributes subAttribute = parseNgsiLdSubAttribute(relationKey, (JSONObject) object);
+                        } else if (object.isJsonObject()) {
+                            Attributes subAttribute = parseNgsiLdSubAttribute(relationKey, object.getAsJsonObject());
                             addAttributeIfValid(subAttributes, subAttribute);
                         } else {
                             logger.info("Sub Attribute {} has unexpected value type: {}", relationKey, object.getClass());
@@ -164,20 +162,22 @@ public class NGSIUtils {
         return new Attributes(key, attrType, attrValue, datasetId, !subAttributes.isEmpty(), subAttributes);
     }
 
-    private String parseEntityTypes(JSONObject temporalEntity) {
-        if (temporalEntity.get("type") instanceof JSONArray) {
-            return temporalEntity.getJSONArray("type")
-                    .toList()
-                    .stream().map(type -> (String) type)
-                    .sorted()
-                    .collect(Collectors.joining("_"));
+    private String parseEntityTypes(JsonObject temporalEntity) {
+        JsonElement typeElement = temporalEntity.get("type");
+        if (typeElement.isJsonArray()) {
+            JsonArray typeArray = typeElement.getAsJsonArray();
+            List<String> types = new ArrayList<>();
+            for (int i = 0; i < typeArray.size(); i++) {
+                types.add(typeArray.get(i).getAsString());
+            }
+            return types.stream().sorted().collect(Collectors.joining("_"));
         } else {
-            return temporalEntity.getString("type");
+            return typeElement.getAsString();
         }
     }
 
-    private Attributes parseNgsiLdSubAttribute(String key, JSONObject value) {
-        String subAttrType = value.get(NGSILD_TYPE).toString();
+    private Attributes parseNgsiLdSubAttribute(String key, JsonObject value) {
+        String subAttrType = value.get(NGSILD_TYPE).getAsString();
         String subAttrValue = "";
         if (NGSILD_RELATIONSHIP.contentEquals(subAttrType)) {
             subAttrValue = value.get(NGSILD_OBJECT).toString();
