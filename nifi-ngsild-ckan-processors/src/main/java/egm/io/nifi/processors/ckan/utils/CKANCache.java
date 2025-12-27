@@ -1,16 +1,15 @@
 package egm.io.nifi.processors.ckan.utils;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import egm.io.nifi.processors.ckan.http.HttpBackend;
 import egm.io.nifi.processors.ckan.http.JsonResponse;
 import okhttp3.Headers;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 
 /**
  *
@@ -125,10 +124,10 @@ public class CKANCache extends HttpBackend {
         switch (status) {
             case 200:
                 // the organization exists in CKAN
-                JSONObject result = (JSONObject) res.jsonObject().get("result");
+                JsonObject result = res.jsonObject().getAsJsonObject("result");
 
                 // put the organization in the tree and in the organization map
-                String orgId = result.get("id").toString();
+                String orgId = result.get("id").getAsString();
                 tree.put(orgName, new HashMap<>());
                 orgMap.put(orgName, orgId);
                 logger.info("Organization found in CKAN, now cached (orgName/orgId=\"{}/{}\")", orgName, orgId);
@@ -138,9 +137,9 @@ public class CKANCache extends HttpBackend {
                 return false;
             default:
                 throw new Exception("Could not check if the organization exists ("
-                        + "orgName=" + orgName + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject().toString() + ")");
-        } // switch
-    } // isCachedOrg
+                    + "orgName=" + orgName + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject() + ")");
+        }
+    }
 
     /**
      * Checks if the package is cached. If not cached, CKAN is queried in order to update the cache.
@@ -166,15 +165,17 @@ public class CKANCache extends HttpBackend {
 
         switch (res.statusCode()) {
             case 200:
-                JSONObject result = (JSONObject) res.jsonObject().get("result");
-                if (result.get("count").equals(0L)) {
+                JsonObject result = (JsonObject) res.jsonObject().get("result");
+                if (result.get("count").getAsLong() == 0L) {
                     logger.info("Package '{}' not found in CKAN", pkgName);
                     return false;
                 }
 
-                JSONObject pkgObject = ((JSONObject) ((JSONArray) result.get("results")).getFirst());
+                JsonArray results = result.getAsJsonArray("results");
+                JsonObject pkgObject = results.get(0).getAsJsonObject();
+                
                 // check if the package is in "deleted" state
-                String pkgState = pkgObject.get("state").toString();
+                String pkgState = pkgObject.get("state").getAsString();
 
                 if (pkgState.equals("deleted")) {
                     throw new Exception("The package '" + pkgName + "' exists but it is in a "
@@ -182,13 +183,13 @@ public class CKANCache extends HttpBackend {
                 }
 
                 // put the package in the tree and in the package map
-                String pkgId = pkgObject.get("id").toString();
+                String pkgId = pkgObject.get("id").getAsString();
                 tree.get(orgName).put(pkgName, new ArrayList<>());
                 setPkgId(orgName, pkgName, pkgId);
                 logger.info("Package found in CKAN, now cached (orgName={}, pkgName/pkgId={}/{})", orgName, pkgName, pkgId);
 
                 // get the resource and populate the resource map
-                JSONArray resources = (JSONArray) pkgObject.get("resources");
+                JsonArray resources = pkgObject.getAsJsonArray("resources");
                 logger.info("Going to populate the resources cache (orgName={}, pkgName={})", orgName, pkgName);
                 populateResourcesMap(resources, orgName, pkgName, false);
                 return true;
@@ -196,9 +197,9 @@ public class CKANCache extends HttpBackend {
                 return false;
             default:
                 throw new Exception("Could not check if the package exists ("
-                        + "orgName=" + orgName + ", pkgName=" + pkgName + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject().toString() + ")");
-        } // switch
-    } // isCachedPkg
+                    + "orgName=" + orgName + ", pkgName=" + pkgName + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject() + ")");
+        }
+    }
 
     /**
      * Checks if the resource is cached. If not cached, CKAN is queried in order to update the cache.
@@ -234,8 +235,8 @@ public class CKANCache extends HttpBackend {
                 // there is no need to check if the package is in "deleted" state...
 
                 // get the resource and populate the resource map
-                JSONObject result = (JSONObject) res.jsonObject().get("result");
-                JSONArray resources = (JSONArray) result.get("resources");
+                JsonObject result = res.jsonObject().getAsJsonObject("result");
+                JsonArray resources = result.getAsJsonArray("resources");
 
                 if (resources.isEmpty()) {
                     return false;
@@ -252,16 +253,16 @@ public class CKANCache extends HttpBackend {
                         logger.info("Resource not found in the cache, once queried CKAN " +
                                 "(orgName=\"{}\", pkgName=\"{}\", resName=\"{}\")", orgName, pkgName, resName);
                         return false;
-                    } // if else
-                } // if else
+                    }
+                }
             case 404:
                 return false;
             default:
                 throw new Exception("Could not check if the resource exists ("
-                        + "orgName=" + orgName + ", pkgName=" + pkgName + ", resName=" + resName
-                        + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject().toString() + ")");
-        } // switch
-    } // isCachedRes
+                    + "orgName=" + orgName + ", pkgName=" + pkgName + ", resName=" + resName
+                    + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject() + ")");
+        }
+    }
 
     /**
      * Populates the resourceName-resource map of a given orgName with the package information from the CKAN response.
@@ -271,7 +272,7 @@ public class CKANCache extends HttpBackend {
      * @param pkgName        Package name
      * @param checkExistence If true, checks if the queried resource already exists in the cache
      */
-    private void populateResourcesMap(JSONArray resources, String orgName, String pkgName, boolean checkExistence) {
+    private void populateResourcesMap(JsonArray resources, String orgName, String pkgName, boolean checkExistence) {
         if (resources == null || resources.isEmpty()) {
             logger.info("The resources list is empty, nothing to cache");
             return;
@@ -279,11 +280,11 @@ public class CKANCache extends HttpBackend {
 
         logger.info("Resources to be populated: {} (orgName={}, pkgName={})", resources, orgName, pkgName);
 
-        for (Object resource : resources) {
+        for (int i = 0; i < resources.size(); i++) {
             // get the resource name and id (resources cannot be in deleted state)
-            JSONObject resourceObject = (JSONObject) resource;
-            String resourceName = (String) resourceObject.get("name");
-            String resourceId = (String) resourceObject.get("id");
+            JsonObject resourceObject = resources.get(i).getAsJsonObject();
+            String resourceName = resourceObject.get("name").getAsString();
+            String resourceId = resourceObject.get("id").getAsString();
 
             // put the resource in the tree and in the resource map
             if (checkExistence) {
