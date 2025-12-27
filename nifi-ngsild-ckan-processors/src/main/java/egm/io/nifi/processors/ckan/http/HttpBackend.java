@@ -6,12 +6,10 @@ import org.json.simple.parser.JSONParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-
 public class HttpBackend {
+    private static final Logger logger = LoggerFactory.getLogger(HttpBackend.class);
     private final String url;
     private final OkHttpClient httpClient;
-    private static final Logger logger = LoggerFactory.getLogger(HttpBackend.class);
 
     public HttpBackend(String url) {
         this.url = url;
@@ -36,35 +34,31 @@ public class HttpBackend {
         }
 
         Request request = requestBuilder.build();
-        logger.debug("Http request: {}", request);
+        logger.info("Http request: {}", request);
 
         try (Response response = httpClient.newCall(request).execute()) {
-            if (!response.isSuccessful())
-                throw new IOException("Unexpected response status: " + response);
-            assert response.body() != null;
-            return createJsonResponse(response.body().string(), response.headers(), response.code());
-        } catch (IOException e) {
-            throw new Exception(e.getMessage());
+            return createJsonResponse(response.body(), response.headers(), response.code());
         }
     }
 
-    private JsonResponse createJsonResponse(String body, Headers headers, int status) throws Exception {
+    private JsonResponse createJsonResponse(ResponseBody body, Headers headers, int status) throws Exception {
         try {
             logger.info("Http response status: {}", status);
 
             JSONObject jsonPayload = null;
             if (body != null) {
-                logger.debug("Http response payload: {}", body);
+                String stringBody = body.string();
+                logger.info("Http response payload: {}", stringBody);
 
-                if (!body.isEmpty()) {
+                if (!stringBody.isEmpty()) {
                     JSONParser jsonParser = new JSONParser();
 
-                    if (body.startsWith("[")) {
-                        Object object = jsonParser.parse(body);
+                    if (stringBody.startsWith("[")) {
+                        Object object = jsonParser.parse(stringBody);
                         jsonPayload = new JSONObject();
                         jsonPayload.put("result", object);
                     } else {
-                        jsonPayload = (JSONObject) jsonParser.parse(body);
+                        jsonPayload = (JSONObject) jsonParser.parse(stringBody);
                     }
                 }
             }

@@ -1,4 +1,4 @@
-# NgsiLdToCkan
+# NGSI-LD to CKAN
 
 [![License: Apache-2.0](https://img.shields.io/github/license/stellio-hub/stellio-context-broker.svg)](https://spdx.org/licenses/Apache-2.0.html)
 ![Build](https://github.com/easy-global-market/nifi-ngsild-ckan/actions/workflows/maven.yml/badge.svg)
@@ -117,7 +117,9 @@ A `Subscription` must be created to trigger the notifications sent when entities
         "endpoint": {
             "uri": "http://localhost:8080/ckanListener",
             "accept": "application/json"
-        }
+        },
+        "join": "inline",
+        "joinLevel": 1
     }
 }
 ```
@@ -199,7 +201,7 @@ A basic NiFi template with the `NgsiLdToCkan` processor can be found [here](CKAN
 
 ## Roadmap & Issues
 
-To check out planned features, report bugs or suggest new features see [open issues](https://github.com/easy-global-market/nifi-ngsild-ckan/issues).
+To check out planned features, report bugs or suggest new features, see [open issues](https://github.com/easy-global-market/nifi-ngsild-ckan/issues).
 
 ## Acknowledgments
 

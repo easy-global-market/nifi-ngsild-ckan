@@ -6,45 +6,24 @@ public class Entity {
     public String entityId;
     public String entityType;
     public ArrayList<Attributes> entityAttrs;
-    public ArrayList<AttributesLD> entityAttrsLD;
 
 
-    public Entity(String entityId, String entityType, ArrayList<AttributesLD> entityAttrsLD) {
+    public Entity(String entityId, String entityType, ArrayList<Attributes> entityAttrs) {
         this.entityId = entityId;
         this.entityType = entityType;
-        this.entityAttrsLD=entityAttrsLD;
-    }
-
-    public ArrayList<AttributesLD> getEntityAttrsLD() {
-        return entityAttrsLD;
-    }
-
-    public void setEntityAttrsLD(ArrayList<AttributesLD> entityAttrsLD) {
-        this.entityAttrsLD = entityAttrsLD;
-    }
-
-    public String getEntityType() {
-        return entityType;
-    }
-
-    public void setEntityType(String entityType) {
-        this.entityType = entityType;
+        this.entityAttrs = entityAttrs;
     }
 
     public ArrayList<Attributes> getEntityAttrs() {
         return entityAttrs;
     }
 
-    public void setEntityAttrs(ArrayList<Attributes> entityAttrs) {
-        this.entityAttrs = entityAttrs;
+    public String getEntityType() {
+        return entityType;
     }
 
     public String getEntityId() {
         return entityId;
-    }
-
-    public void setEntityId(String entityId) {
-        this.entityId = entityId;
     }
 
     @Override
@@ -52,8 +31,7 @@ public class Entity {
         return "Entity{" +
                 "entityId='" + entityId + '\'' +
                 ", entityType='" + entityType + '\'' +
-                ", entityAttrs=" + entityAttrs +
-                ", entityAttrsLD=" + entityAttrsLD +
+                ", entityAttrsLD=" + entityAttrs +
                 '}';
     }
 }

@@ -6,54 +6,53 @@ public class Attributes {
     public String attrName;
     public String attrType;
     public String attrValue;
-    public ArrayList<Metadata> attrMetadata;
-    public String metadataString;
+    public String datasetId;
+    public boolean hasSubAttrs;
+    public ArrayList<Attributes> subAttrs;
 
-    public String getMetadataString() {
-        return metadataString;
+    public Attributes(String attrName, String attrType, String attrValue, String datasetId, boolean hasSubAttrs, ArrayList<Attributes> subAttrs) {
+        this.attrName = attrName;
+        this.attrType = attrType;
+        this.attrValue = attrValue;
+        this.datasetId = datasetId;
+        this.hasSubAttrs = hasSubAttrs;
+        this.subAttrs = subAttrs;
+
     }
 
-    public void setMetadataString(String metadataString) {
-        this.metadataString = metadataString;
+    public boolean isHasSubAttrs() {
+        return hasSubAttrs;
+    }
+
+    public ArrayList<Attributes> getSubAttrs() {
+        return subAttrs;
     }
 
     public String getAttrName() {
         return attrName;
     }
 
-    public void setAttrName(String attrName) {
-        this.attrName = attrName;
-    }
-
     public String getAttrType() {
         return attrType;
-    }
-
-    public ArrayList<Metadata> getAttrMetadata() {
-        return attrMetadata;
-    }
-
-    public void setAttrMetadata(ArrayList<Metadata> attrMetadata) {
-        this.attrMetadata = attrMetadata;
-    }
-
-    public void setAttrType(String attrType) {
-        this.attrType = attrType;
     }
 
     public String getAttrValue() {
         return attrValue;
     }
 
-    public void setAttrValue(String attrValue) {
-        this.attrValue = attrValue;
+    public String getDatasetId() {
+        return datasetId;
     }
 
-    public Attributes(String attrName, String attrType, String attrValue, ArrayList<Metadata> attrMetadata,String metadataString) {
-        this.attrName = attrName;
-        this.attrType = attrType;
-        this.attrValue = attrValue;
-        this.attrMetadata = attrMetadata;
-        this.metadataString = metadataString;
+    @Override
+    public String toString() {
+        return "Attributes{" +
+                "attrName='" + attrName + '\'' +
+                ", attrType='" + attrType + '\'' +
+                ", attrValue='" + attrValue + '\'' +
+                ", datasetId='" + datasetId + '\'' +
+                ", hasSubAttrs=" + hasSubAttrs +
+                ", subAttrs=" + (subAttrs != null ? subAttrs.toString() : "null") +
+                '}';
     }
 }
