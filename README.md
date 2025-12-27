@@ -117,7 +117,9 @@ A `Subscription` must be created to trigger the notifications sent when entities
         "endpoint": {
             "uri": "http://localhost:8080/ckanListener",
             "accept": "application/json"
-        }
+        },
+        "join": "inline",
+        "joinLevel": 1
     }
 }
 ```
@@ -199,7 +201,7 @@ A basic NiFi template with the `NgsiLdToCkan` processor can be found [here](CKAN
 
 ## Roadmap & Issues
 
-To check out planned features, report bugs or suggest new features see [open issues](https://github.com/easy-global-market/nifi-ngsild-ckan/issues).
+To check out planned features, report bugs or suggest new features, see [open issues](https://github.com/easy-global-market/nifi-ngsild-ckan/issues).
 
 ## Acknowledgments
 
