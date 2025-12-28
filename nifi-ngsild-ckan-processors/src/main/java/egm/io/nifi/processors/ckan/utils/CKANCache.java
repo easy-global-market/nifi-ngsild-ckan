@@ -108,11 +108,11 @@ public class CKANCache extends HttpBackend {
     public boolean isCachedOrg(String orgName) throws Exception {
         // check if the organization has already been cached
         if (tree.containsKey(orgName)) {
-            logger.info("Organization found in the cache (orgName=\"{}\")", orgName);
+            logger.info("Organization found in the cache (orgName={})", orgName);
             return true;
         } // if
 
-        logger.info("Organization not found in the cache, querying CKAN for it (orgName=\"{}\")", orgName);
+        logger.info("Organization not found in the cache, querying CKAN for it (orgName={})", orgName);
 
         // query CKAN for the organization information
         String ckanURL = "/api/3/action/organization_show?id=" + orgName;
@@ -130,7 +130,7 @@ public class CKANCache extends HttpBackend {
                 String orgId = result.get("id").getAsString();
                 tree.put(orgName, new HashMap<>());
                 orgMap.put(orgName, orgId);
-                logger.info("Organization found in CKAN, now cached (orgName/orgId=\"{}/{}\")", orgName, orgId);
+                logger.info("Organization found in CKAN, now cached (orgName/orgId={}/{})", orgName, orgId);
                 return true;
             case 404:
                 logger.info("Organization '{}' not found in CKAN", orgName);
@@ -151,11 +151,11 @@ public class CKANCache extends HttpBackend {
      */
     public boolean isCachedPkg(String orgName, String pkgName) throws Exception {
         if (tree.get(orgName).containsKey(pkgName)) {
-            logger.info("Package found in the cache (orgName=\"{}\", pkgName=\"{}\")", orgName, pkgName);
+            logger.info("Package found in the cache (orgName={}, pkgName={})", orgName, pkgName);
             return true;
         }
 
-        logger.info("Package not found in the cache, querying CKAN for it (orgName=\"{}\", pkgName=\"{}\")", orgName, pkgName);
+        logger.info("Package not found in the cache, querying CKAN for it (orgName={}, pkgName={})", orgName, pkgName);
 
         // query CKAN for the package information
         String ckanURL = "/api/3/action/package_search?q=" + pkgName +

@@ -109,11 +109,11 @@ public class NGSIUtils {
         datasetId = value.has(NGSILD_DATASET_ID) ? value.get(NGSILD_DATASET_ID).getAsString() : "";
         
         if (NGSILD_RELATIONSHIP.contentEquals(attrType)) {
-            attrValue = value.get(NGSILD_OBJECT).toString();
+            attrValue = attributeValueToString(value.get(NGSILD_OBJECT));
         } else if (NGSILD_PROPERTY.contentEquals(attrType)) {
-            attrValue = value.get(NGSILD_VALUE).toString();
+            attrValue = attributeValueToString(value.get(NGSILD_VALUE));
         } else if (NGSILD_GEOPROPERTY.contentEquals(attrType)) {
-            attrValue = value.get(NGSILD_VALUE).toString();
+            attrValue = attributeValueToString(value.get(NGSILD_VALUE));
         }
 
         for (String keyOne : value.keySet()) {
@@ -121,19 +121,19 @@ public class NGSIUtils {
                 // Do Nothing
             } else if (keyOne.equals(NGSILD_OBSERVED_AT) || keyOne.equals(NGSILD_UNIT_CODE)) {
                 subAttributes.add(
-                        new Attributes(keyOne, "NonReifiedProperty", value.get(keyOne).getAsString(), "", false, null)
+                    new Attributes(keyOne, "NonReifiedProperty", value.get(keyOne).getAsString(), "", false, null)
                 );
             } else {
                 JsonObject value2 = value.getAsJsonObject(keyOne);
                 String subAttrType = value2.get(NGSILD_TYPE).getAsString();
                 if (NGSILD_RELATIONSHIP.contentEquals(subAttrType)) {
-                    String subAttrValue = value2.get(NGSILD_OBJECT).toString();
+                    String subAttrValue = attributeValueToString(value2.get(NGSILD_OBJECT));
                     subAttributes.add(new Attributes(keyOne, subAttrType, subAttrValue, "", false, null));
                 } else if (NGSILD_PROPERTY.contentEquals(subAttrType)) {
-                    String subAttrValue = value2.get(NGSILD_VALUE).toString();
+                    String subAttrValue = attributeValueToString(value2.get(NGSILD_VALUE));
                     subAttributes.add(new Attributes(keyOne, subAttrType, subAttrValue, "", false, null));
                 } else if (NGSILD_GEOPROPERTY.contentEquals(subAttrType)) {
-                    String subAttrValue = value2.get(NGSILD_VALUE).toString();
+                    String subAttrValue = attributeValueToString(value2.get(NGSILD_VALUE));
                     subAttributes.add(new Attributes(keyOne, subAttrType, subAttrValue, "", false, null));
                 } else if ("entity".equals(keyOne)) {
                     value2.remove(NGSILD_ID);
@@ -180,11 +180,11 @@ public class NGSIUtils {
         String subAttrType = value.get(NGSILD_TYPE).getAsString();
         String subAttrValue = "";
         if (NGSILD_RELATIONSHIP.contentEquals(subAttrType)) {
-            subAttrValue = value.get(NGSILD_OBJECT).toString();
+            subAttrValue = attributeValueToString(value.get(NGSILD_OBJECT));
         } else if (NGSILD_PROPERTY.contentEquals(subAttrType)) {
-            subAttrValue = value.get(NGSILD_VALUE).toString();
+            subAttrValue = attributeValueToString(value.get(NGSILD_VALUE));
         } else if (NGSILD_GEOPROPERTY.contentEquals(subAttrType)) {
-            subAttrValue = value.get(NGSILD_VALUE).toString();
+            subAttrValue = attributeValueToString(value.get(NGSILD_VALUE));
         }
 
         return new Attributes(key.toLowerCase(), subAttrType, subAttrValue, "", false, null);
@@ -199,5 +199,13 @@ public class NGSIUtils {
                 attribute.getAttrValue() != null &&
                 !Objects.equals(attribute.getAttrValue(), "null"))
             attributes.add(attribute);
+    }
+
+    private String attributeValueToString(JsonElement element) {
+        if (element.isJsonPrimitive()) {
+            return element.getAsString();
+        } else {
+            return element.toString();
+        }
     }
 }
