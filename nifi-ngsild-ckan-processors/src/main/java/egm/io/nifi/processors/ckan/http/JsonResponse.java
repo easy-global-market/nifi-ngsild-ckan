@@ -1,24 +1,18 @@
 package egm.io.nifi.processors.ckan.http;
 
-import org.json.simple.JSONObject;
+import com.google.gson.JsonObject;
 
 public record JsonResponse(
-        JSONObject jsonObject,
-        int statusCode,
-        String locationHeader
+    JsonObject jsonObject,
+    int statusCode
 ) {
     @Override
-    public JSONObject jsonObject() {
+    public JsonObject jsonObject() {
         return jsonObject;
-    } // getJsonObject
+    }
 
     @Override
     public int statusCode() {
         return statusCode;
-    } // getStatusCode
-
-    @Override
-    public String locationHeader() {
-        return locationHeader;
     }
 }

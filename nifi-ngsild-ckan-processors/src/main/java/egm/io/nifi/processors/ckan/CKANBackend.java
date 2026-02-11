@@ -13,13 +13,12 @@ import egm.io.nifi.processors.ckan.ngsild.NGSIConstants;
 import egm.io.nifi.processors.ckan.utils.CKANCache;
 import egm.io.nifi.processors.ckan.utils.CKANUtils;
 import okhttp3.Headers;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 public class CKANBackend extends HttpBackend {
 
@@ -122,7 +121,7 @@ public class CKANBackend extends HttpBackend {
      */
     private void insert(String resId, List<JsonObject> records) throws Exception {
         JsonObject entityRecord = new JsonObject();
-        for (JsonObject record: records) {
+        for (JsonObject record : records) {
             String key = record.keySet().stream().findFirst().get();
             entityRecord.add(key, record.get(key));
         }
@@ -138,7 +137,7 @@ public class CKANBackend extends HttpBackend {
             logger.info("Successful insert (resource/datastore id=\"{}\")", resId);
         } else {
             throw new Exception("Could not insert (resId=" + resId + ", statusCode="
-                    + res.statusCode() + ", response=" + res.jsonObject().toString() + ")");
+                + res.statusCode() + ", response=" + res.jsonObject() + ")");
         }
     }
 
@@ -162,12 +161,12 @@ public class CKANBackend extends HttpBackend {
         JsonResponse res = doCKANRequest("POST", urlPath, dataJson.toString());
 
         if (res.statusCode() == 200) {
-            String orgId = ((JSONObject) res.jsonObject().get("result")).get("id").toString();
+            String orgId = res.jsonObject().getAsJsonObject("result").get("id").getAsString();
             logger.info("Successful organization creation (orgName/OrgId=\"{}/{}\")", orgName, orgId);
             return orgId;
         } else {
             throw new Exception("Could not create the organization (orgName=" + orgName
-                + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject().toString() + ")");
+                + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject() + ")");
         }
     }
 
@@ -246,27 +245,12 @@ public class CKANBackend extends HttpBackend {
         JsonResponse res = doCKANRequest("POST", urlPath, dataJson.toString());
 
         if (res.statusCode() == 200) {
-            String packageId = ((JSONObject) res.jsonObject().get("result")).get("id").toString();
+            String packageId = res.jsonObject().getAsJsonObject("result").get("id").getAsString();
             logger.info("Successful package creation (pkgName/pkgId=\"{}/{}\")", pkgName, packageId);
             return packageId;
-        /*
-        This is not deleted if in the future we try to activate deleted elements again
-
-        } else if (res.getStatusCode() == 409) {
-            logger.debug("The package exists but its state is \"deleted\", activating it (pkgName="
-                    + pkgName + ")");
-            String packageId = activateElementState(httpClient, pkgName, "dataset");
-
-            if (packageId != null) {
-                logger.debug("Successful package activation (pkgId=" + packageId + ")");
-                return packageId;
-            } else {
-                throw new CygnusRuntimeError("Could not activate the package (pkgId=" + pkgName + ")");
-            } // if else
-        */
         } else {
             throw new Exception("Could not create the package (orgId=" + orgId
-                + ", pkgName=" + pkgName + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject().toString() + ")");
+                + ", pkgName=" + pkgName + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject() + ")");
         }
     }
 
@@ -303,12 +287,12 @@ public class CKANBackend extends HttpBackend {
         JsonResponse res = doCKANRequest("POST", urlPath, dataJson.toString());
 
         if (res.statusCode() == 200) {
-            String resourceId = ((JSONObject) res.jsonObject().get("result")).get("id").toString();
+            String resourceId = res.jsonObject().getAsJsonObject("result").get("id").getAsString();
             logger.info("Successful resource creation (resName/resId=\"{}/{}\")", resName, resourceId);
             return resourceId;
         } else {
             throw new Exception("Could not create the resource (pkgId=" + pkgId
-                + ", resName=" + resName + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject().toString() + ")");
+                + ", resName=" + resName + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject() + ")");
         }
     }
 
@@ -347,7 +331,7 @@ public class CKANBackend extends HttpBackend {
             logger.info("Successful datastore creation (resourceId=\"{}\")", resId);
         } else {
             throw new Exception("Could not create the datastore (resId=" + resId
-                    + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject().toString() + ")");
+                + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject() + ")");
         }
     }
 
@@ -374,10 +358,10 @@ public class CKANBackend extends HttpBackend {
                 logger.info("Successful view creation (resourceId=\"{}\")", resId);
             } else {
                 throw new Exception("Could not create the datastore (resId=" + resId
-                        + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject().toString() + ")");
-            } // if else
-        } // if
-    } // createView
+                    + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject() + ")");
+            }
+        }
+    }
 
     private boolean existsView(String resId) throws Exception {
         // create the CKAN request JSON
@@ -392,12 +376,12 @@ public class CKANBackend extends HttpBackend {
         // check the status
         if (res.statusCode() == 200) {
             logger.info("Successful view listing (resourceId=\"{}\")", resId);
-            return (!((JSONArray) res.jsonObject().get("result")).isEmpty());
+            return (!res.jsonObject().getAsJsonArray("result").isEmpty());
         } else {
             throw new Exception("Could not check if the view exists (resId=" + resId
-                    + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject().toString() + ")");
-        } // if else
-    } // existsView
+                + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject() + ")");
+        }
+    }
 
     private JsonResponse doCKANRequest(String method, String urlPath, String jsonString) throws Exception {
         Headers.Builder headersBuilder = new Headers.Builder();
@@ -447,8 +431,7 @@ public class CKANBackend extends HttpBackend {
 
         String encodedPkgName =
             CKANUtils.encodeCKAN(dcatMetadata.getPackageName().trim().toLowerCase(Locale.ENGLISH)) +
-            "-" +
-            CKANUtils.generateHash(dcatMetadata.getPublisherURL().trim().toLowerCase(Locale.ENGLISH));
+                "-" + CKANUtils.generateHash(dcatMetadata.getPublisherURL().trim().toLowerCase(Locale.ENGLISH));
 
         if (encodedPkgName.length() > NGSIConstants.CKAN_MAX_NAME_LEN) {
             throw new Exception("Building package name '" + encodedPkgName + "' and its length is "
