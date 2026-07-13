@@ -213,6 +213,9 @@ Example of a NGSI-LD subscription:
 * `CKAN Viewer` property specifies the visualization of the resource data on the CKAN resource page.
 * `CKAN API Key` property is a token generated from the user account on the CKAN site.
 * `Create DataStore` property creates the resource in the datastore when set to true.
+* `Resource Grouping` property controls how CKAN resources are selected inside a dataset:
+  * `entity-id` uses each NGSI-LD entity id as the CKAN resource name. This is the default behavior and is suited to temporal entity histories.
+  * `entity-type` uses the NGSI-LD entity type as the CKAN resource name, so entities such as `Operation` are grouped in one CKAN resource/table.
 
 ## Naming conventions
 
