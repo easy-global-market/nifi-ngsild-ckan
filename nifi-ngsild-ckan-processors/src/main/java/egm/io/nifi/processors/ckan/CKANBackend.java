@@ -17,8 +17,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 public class CKANBackend extends HttpBackend {
 
@@ -27,6 +29,9 @@ public class CKANBackend extends HttpBackend {
     private final String apiKey;
     private final String viewer;
     private final CKANCache cache;
+
+    private record DataStoreSchema(Set<String> fieldNames, ArrayList<JsonElement> fields) {
+    }
 
     public CKANBackend(String url, String apiKey, String ckanViewer) {
         super(url);
@@ -109,7 +114,11 @@ public class CKANBackend extends HttpBackend {
 
         logger.info("The resource was cached (orgName=\"{}\", pkgName=\"{}\", resName=\"{}\")", orgName, pkgName, resName);
 
-        return cache.getResId(orgName, pkgName, resName);
+        String resId = cache.getResId(orgName, pkgName, resName);
+        if (createDataStore) {
+            syncDataStoreFields(pkgName, resId, resName, records);
+        }
+        return resId;
     }
 
 
@@ -302,23 +311,114 @@ public class CKANBackend extends HttpBackend {
      * @param resId   Identifies the resource whose datastore is going to be created.
      * @param records Array list with the attribute names for being used as fields with column mode
      */
-    private void createDataStoreWithFields(String pkgName, String resId, String resName, List<JsonObject> records) throws Exception {
-        // CKAN types reference: http://docs.ckan.org/en/ckan-2.2/datastore.html#valid-types
-        ArrayList<JsonElement> jsonArray = new ArrayList<>();
-        for (JsonObject field : records) {
-            JsonObject jsonObject = new JsonObject();
-            jsonObject.addProperty("id", field.keySet().stream().findFirst().get());
-            jsonObject.addProperty("type", "text");
-            logger.info("Adding field: {}", jsonObject.get("id").toString());
-            jsonArray.add(jsonObject);
+    protected void syncDataStoreFields(String pkgName, String resId, String resName, List<JsonObject> records) throws Exception {
+        DataStoreSchema schema = getDataStoreSchema(resId);
+        if (schema == null) {
+            logger.info("DataStore does not exist yet, creating it with current fields (resourceId=\"{}\")", resId);
+            createDataStoreWithFields(pkgName, resId, resName, records);
+            createView(resId);
+            return;
         }
 
+        List<JsonObject> missingRecords = new ArrayList<>();
+        for (JsonObject record : records) {
+            if (!schema.fieldNames().contains(getRecordFieldName(record))) {
+                missingRecords.add(record);
+            }
+        }
+
+        if (missingRecords.isEmpty()) {
+            logger.info("DataStore schema already contains all fields (resourceId=\"{}\")", resId);
+            return;
+        }
+
+        logger.info("Extending DataStore schema with {} missing fields (resourceId=\"{}\")", missingRecords.size(), resId);
+        extendDataStoreWithFields(resId, schema, missingRecords);
+    }
+
+    private DataStoreSchema getDataStoreSchema(String resId) throws Exception {
+        String jsonString = "{ \"id\": \"" + resId + "\" }";
+        String urlPath = "/api/3/action/datastore_info";
+        JsonResponse res = doCKANRequest("POST", urlPath, jsonString);
+
+        if (res.statusCode() == 404) {
+            return null;
+        }
+
+        if (res.statusCode() != 200) {
+            throw new Exception("Could not retrieve datastore schema (resId=" + resId
+                + ", statusCode=" + res.statusCode() + ", response=" + res.jsonObject() + ")");
+        }
+
+        JsonArray fields = res.jsonObject().getAsJsonObject("result").getAsJsonArray("fields");
+        Set<String> fieldNames = new LinkedHashSet<>();
+        ArrayList<JsonElement> fieldSpecs = new ArrayList<>();
+        for (JsonElement field : fields) {
+            JsonObject fieldObject = field.getAsJsonObject();
+            if (fieldObject.has("id")) {
+                fieldNames.add(fieldObject.get("id").getAsString());
+                fieldSpecs.add(fieldObject);
+            }
+        }
+        return new DataStoreSchema(fieldNames, fieldSpecs);
+    }
+
+    private void createDataStoreWithFields(
+        String pkgName,
+        String resId,
+        String resName,
+        List<JsonObject> records
+    ) throws Exception {
+        // CKAN types reference: http://docs.ckan.org/en/ckan-2.2/datastore.html#valid-types
+        ArrayList<JsonElement> jsonArray = buildDataStoreFields(records);
         DataStore dataStore = new DataStore();
         dataStore.setResource_id(resId);
         String alias = resName + CKANUtils.generateHash(pkgName);
         dataStore.setAliases(alias);
         dataStore.setFields(jsonArray);
         dataStore.setForce("true");
+
+        sendDataStoreCreateRequest(dataStore, resId);
+    }
+
+    private void extendDataStoreWithFields(
+        String resId,
+        DataStoreSchema schema,
+        List<JsonObject> missingRecords
+    ) throws Exception {
+        ArrayList<JsonElement> fields = new ArrayList<>(schema.fields());
+        fields.addAll(buildDataStoreFields(missingRecords));
+
+        DataStore dataStore = new DataStore();
+        dataStore.setResource_id(resId);
+        dataStore.setFields(fields);
+        dataStore.setForce("true");
+
+        sendDataStoreCreateRequest(dataStore, resId);
+    }
+
+    private ArrayList<JsonElement> buildDataStoreFields(List<JsonObject> records) {
+        ArrayList<JsonElement> jsonArray = new ArrayList<>();
+        Set<String> fieldNames = new LinkedHashSet<>();
+        for (JsonObject field : records) {
+            String fieldName = getRecordFieldName(field);
+            if (!fieldNames.add(fieldName)) {
+                continue;
+            }
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.addProperty("id", fieldName);
+            jsonObject.addProperty("type", "text");
+            logger.info("Adding field: {}", jsonObject.get("id").toString());
+            jsonArray.add(jsonObject);
+        }
+        return jsonArray;
+    }
+
+    private String getRecordFieldName(JsonObject record) {
+        return record.keySet().stream().findFirst().get();
+    }
+
+    private void sendDataStoreCreateRequest(DataStore dataStore, String resId) throws Exception {
         Gson gson = new Gson();
         String jsonString = gson.toJson(dataStore);
 
@@ -383,7 +483,7 @@ public class CKANBackend extends HttpBackend {
         }
     }
 
-    private JsonResponse doCKANRequest(String method, String urlPath, String jsonString) throws Exception {
+    protected JsonResponse doCKANRequest(String method, String urlPath, String jsonString) throws Exception {
         Headers.Builder headersBuilder = new Headers.Builder();
         headersBuilder.add("Authorization", apiKey);
         headersBuilder.add("Content-Type", "application/json; charset=utf-8");
