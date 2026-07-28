@@ -274,7 +274,6 @@ A basic NiFi template with the `NgsiLdToCkan` processor can be found [here](CKAN
 ## Current limitations
 
 * The processor only supports attributes of type `Property`, `Relationship` and `GeoProperty`. 
-* An already existing resource can't be updated with new attributes.
 * The processor is missing unit tests.
 
 ## Roadmap & Issues
