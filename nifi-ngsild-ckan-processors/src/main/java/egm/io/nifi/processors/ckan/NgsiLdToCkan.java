@@ -36,6 +36,9 @@ import static egm.io.nifi.processors.ckan.ngsild.NGSIConstants.DCAT_PUBLISHER_UR
 @CapabilityDescription("Create a CKAN resource, package and dataset if not exists using the information coming from an NGSI-LD event converted to flow file." +
         "After insert all of the values of the flow file content extraction the entities and attributes")
 public class NgsiLdToCkan extends AbstractProcessor {
+    protected static final String RESOURCE_GROUPING_ENTITY_ID = "entity-id";
+    protected static final String RESOURCE_GROUPING_ENTITY_TYPE = "entity-type";
+
     protected static final PropertyDescriptor CKAN_URL = new PropertyDescriptor.Builder()
             .name("CKAN URL")
             .displayName("CKAN URL")
@@ -82,6 +85,16 @@ public class NgsiLdToCkan extends AbstractProcessor {
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .build();
 
+    protected static final PropertyDescriptor RESOURCE_GROUPING = new PropertyDescriptor.Builder()
+            .name("resource-grouping")
+            .displayName("Resource Grouping")
+            .description("Controls how CKAN resources are selected inside a dataset. Use entity-id to keep one resource per NGSI-LD entity. Use entity-type to put entities of the same NGSI-LD type in the same CKAN resource.")
+            .required(false)
+            .allowableValues(RESOURCE_GROUPING_ENTITY_ID, RESOURCE_GROUPING_ENTITY_TYPE)
+            .defaultValue(RESOURCE_GROUPING_ENTITY_ID)
+            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
+            .build();
+
     protected static final PropertyDescriptor BATCH_SIZE = new PropertyDescriptor.Builder()
             .name("Batch Size")
             .description("The preferred number of FlowFiles to put to the database in a single transaction")
@@ -114,6 +127,7 @@ public class NgsiLdToCkan extends AbstractProcessor {
         properties.add(CKAN_API_KEY);
         properties.add(CREATE_DATASTORE);
         properties.add(DATASETID_PREFIX_TRUNCATE);
+        properties.add(RESOURCE_GROUPING);
         properties.add(BATCH_SIZE);
         properties.add(RollbackOnFailure.ROLLBACK_ON_FAILURE);
         return properties;
@@ -138,9 +152,23 @@ public class NgsiLdToCkan extends AbstractProcessor {
         getLogger().info("CKAN backend initialized with URL: {}", url);
     }
 
+    protected String buildResourceName(
+        CKANBackend ckanBackend,
+        Entity entity,
+        DCATMetadata dcatMetadata,
+        String resourceGrouping
+    ) throws Exception {
+        if (RESOURCE_GROUPING_ENTITY_TYPE.equals(resourceGrouping)) {
+            dcatMetadata.setResourceName(entity.getEntityType());
+        }
+
+        return ckanBackend.buildResName(entity, dcatMetadata);
+    }
+
     protected void persistFlowFile(final ProcessContext context, final FlowFile flowFile, ProcessSession session, CKANBackend ckanBackend) throws Exception {
         final boolean createDataStore = context.getProperty(CREATE_DATASTORE).asBoolean();
         final String datasetIdPrefixTruncate = context.getProperty(DATASETID_PREFIX_TRUNCATE).getValue();
+        final String resourceGrouping = context.getProperty(RESOURCE_GROUPING).getValue();
         final NGSIUtils n = new NGSIUtils();
         final NGSIEvent event = n.getEventFromFlowFile(flowFile, session);
         final long creationTime = event.getCreationTime();
@@ -156,7 +184,7 @@ public class NgsiLdToCkan extends AbstractProcessor {
 
             final String orgName = ckanBackend.buildOrgName(dcatMetadata);
             final String pkgName = ckanBackend.buildPkgName(dcatMetadata);
-            final String resName = ckanBackend.buildResName(entity, dcatMetadata);
+            final String resName = buildResourceName(ckanBackend, entity, dcatMetadata, resourceGrouping);
 
             CKANColumnAggregator aggregator = new CKANColumnAggregator();
             aggregator.initialize(entity, creationTime, datasetIdPrefixTruncate);
